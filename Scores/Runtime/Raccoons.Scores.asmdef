@@ -1,0 +1,17 @@
+{
+    "name": "Raccoons.Scores",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8150ab87eab22b0429d09a5719b6b0aa",
+        "GUID:ea7da179101b6cf409bd336b534fdfd1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

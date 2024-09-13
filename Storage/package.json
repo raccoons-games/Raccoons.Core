@@ -1,0 +1,34 @@
+{
+  "name": "com.raccoons.storage",
+  "displayName": "Raccoons Storage",
+  "version": "0.3.8",
+  "description": "Storage framework, provides storage architecture and implementations on PlayerPrefs and FileSystem. \nRequires:\n- Raccoons.Files\n- Raccoons.Serialization.NewtonsoftJson",
+  "unity": "2018.1",
+  "author": "Raccoons Games",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raccoons-games/Raccoons.Storage.git"
+  },
+  "keywords": [
+    "unity",
+    "framework",
+    "storage",
+    "player-prefs"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/raccoons-games/Raccoons.Storage/issues"
+  },
+  "homepage": "https://github.com/raccoons-games/Raccoons.Storage#readme",
+  "samples": [
+    {
+      "displayName": "Samples",
+      "description": "Contains sample scene with storing float and string value",
+      "path": "Samples~"
+    }
+  ],
+  "dependencies": {
+    "com.raccoons.files": "",
+    "com.raccoons.serialization.newtonsoftjson": ""
+  }
+}

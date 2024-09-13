@@ -1,0 +1,17 @@
+{
+    "name": "Raccoons.Storage",
+    "rootNamespace": "",
+    "references": [
+        "GUID:9e566694c75c5da4abc321f877ee7437",
+        "GUID:fcbf1a12b8c872549ae54131a635bd75"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
