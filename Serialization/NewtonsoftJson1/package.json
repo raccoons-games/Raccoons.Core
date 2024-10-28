@@ -1,0 +1,11 @@
+{
+  "name": "com.raccoons.serialization.newtonsoftjson",
+  "displayName": "Raccoons Newtonsoft Json Serialization",
+  "version": "0.1.2",
+  "description": "Newtonsoft Json Serialization for Raccoons Framework.\nRequires:\n- Raccoons.Serialization\n- Newtonsoft.Json (or JSON.NET for Unity)",
+  "unity": "2018.1",
+  "dependencies": {
+    "com.raccoons.serialization": ""
+  },
+  "author": "Raccoons Games"
+}
