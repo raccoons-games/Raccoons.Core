@@ -1,0 +1,18 @@
+{
+    "name": "Raccoons.Core.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:afcc11cde93594cf0b983590f31a5c49"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
