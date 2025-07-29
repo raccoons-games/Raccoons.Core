@@ -48,10 +48,11 @@ namespace Raccoons.UI.Screens
                 Debug.LogError($"{gameObject.name} Screen == null!");
             }
         }
-        public virtual void ShowScreen<R>() where R: BaseScreen
+        public virtual R ShowScreen<R>() where R: BaseScreen
         {
             R screen = GetScreen<R>(typeof(R));
             ShowScreen(screen);
+            return screen;
         }
         protected virtual void CloseScreen(IScreen screen)
         {
@@ -123,7 +124,7 @@ namespace Raccoons.UI.Screens
 
         #endregion
 
-            #region Events
+        #region Events
         protected virtual void Screen_OnClosed(object sender, IScreen e)
         {
             RemoveOpenedScreen(e);

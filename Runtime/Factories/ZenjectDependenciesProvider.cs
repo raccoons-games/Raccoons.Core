@@ -43,6 +43,10 @@ namespace Raccoons.Factories
 
         public T Get<T>()
         {
+            if (typeof(T) == typeof(DiContainer))
+            {
+                return (T)(object)_container;
+            }
             EnsureContainer();
             if (_cachedDependencies.TryGetValue(typeof(T), out var result) && result != null)
             {

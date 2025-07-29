@@ -2,8 +2,7 @@
     "name": "Raccoons.Core.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:afcc11cde93594cf0b983590f31a5c49",
-        "Raccoons.Core"
+        "GUID:afcc11cde93594cf0b983590f31a5c49"
     ],
     "includePlatforms": [
         "Editor"

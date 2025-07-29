@@ -26,16 +26,18 @@ namespace Raccoons.Factories.Pools
         {
             var instance = Instantiate(prefab, transform);
             instance.SetActive(false);
-
-            if (instance.TryGetComponent<PoolObject>(out var poolObj))
-            {
-                _poolQueue.Enqueue(poolObj);
-                poolObj.OwningPool = this;
-            }
+            
+            if (instance.TryGetComponent<PoolObject>(out var poolObj)) { }
             else
             {
-                throw new Exception("Pool prefab is not having PoolObject component");
+                if (instance.TryGetComponent<IDestroyHandler>(out var destroyHandler))
+                {
+                    Destroy(destroyHandler as Component);
+                }
+                poolObj = instance.AddComponent<PoolObject>();
             }
+            _poolQueue.Enqueue(poolObj);
+            poolObj.OwningPool = this;
         }
 
         protected override GameObject CreateInternal()
@@ -50,7 +52,7 @@ namespace Raccoons.Factories.Pools
             return obj.gameObject;
         }
         
-        public void Return(PoolObject poolObject)
+        public virtual void Return(PoolObject poolObject)
         {
             poolObject.gameObject.SetActive(false);
             _poolQueue.Enqueue(poolObject);
