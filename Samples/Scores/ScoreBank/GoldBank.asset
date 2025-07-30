@@ -10,5 +10,5 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: be3b7d3fb38cc134e89529ab4af94597, type: 3}
-  m_Name: Gold
+  m_Name: GoldBank
   m_EditorClassIdentifier: 

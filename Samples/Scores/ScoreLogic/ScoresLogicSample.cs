@@ -6,7 +6,7 @@ using Raccoons.Storage;
 using Raccoons.Storage.Memory;
 using UnityEngine;
 
-namespace Samples.Scores
+namespace Raccoons.Core.Samples.Scores.ScoreLogic
 {
     public class ScoresLogicSample : MonoBehaviour
     {

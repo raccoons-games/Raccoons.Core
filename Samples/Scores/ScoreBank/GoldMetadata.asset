@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GoldMetadata
   m_EditorClassIdentifier: 
   <Metadata>k__BackingField:
-    <Name>k__BackingField: Gold
-    <Description>k__BackingField: 
-    <SmallIcon>k__BackingField: {fileID: 0}
-    <BigIcon>k__BackingField: {fileID: 0}
+    <Name>k__BackingField: GoldBank
+    <Description>k__BackingField: Gold Currency
+    <SmallIcon>k__BackingField: {fileID: 21300000, guid: 65c9aa723ee284bc88519f1fbacbabf1, type: 3}
+    <BigIcon>k__BackingField: {fileID: 21300000, guid: 65c9aa723ee284bc88519f1fbacbabf1, type: 3}
