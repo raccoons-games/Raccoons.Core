@@ -6,6 +6,7 @@ namespace Raccoons.Scores
 {
     public interface IScoreBank : IScoreStorage
     {
+        public ScoreMetadata Metadata { get; }
         public event EventHandler<ScoreAcquisitionData> OnScoreAcquired;
         public event EventHandler<ScoreSpendingData> OnScoreSpent;
         public bool CanAcquire(float amount);

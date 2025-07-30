@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Raccoons.Identifiers.Guids;
 using Raccoons.Scores.Assets;
 using Raccoons.Scores.Banks;
@@ -13,6 +14,8 @@ namespace Raccoons.Scores.Installers
     public class ScoreBankInstaller : MonoInstaller
     {
         [SerializeField] private GuidAsset key;
+        
+        [Header("Optional")]
         [SerializeField] private ScoreMetadataAsset metadata;
         
         [Tooltip("Leave empty if you don't want to encrypt it")]

@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Raccoons.Networking.Api.WebRequests.UnityWebRequests
@@ -35,9 +36,14 @@ namespace Raccoons.Networking.Api.WebRequests.UnityWebRequests
 
         public override IWebRequestBuilder Post(string url)
         {
-            UnityWebRequest = UnityWebRequest.PostWwwForm(url,"");
+#if UNITY_2021_1_OR_NEWER
+            UnityWebRequest = UnityWebRequest.Post(url, new WWWForm());
+#else
+            UnityWebRequest = UnityWebRequest.PostWwwForm(url, "");
+#endif
             return this;
         }
+
 
         public override IWebRequestBuilder Put(string url)
         {
