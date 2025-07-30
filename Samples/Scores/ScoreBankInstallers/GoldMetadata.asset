@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60c4b271770f4337be79efb9e1f8557d, type: 3}
+  m_Name: GoldMetadata
+  m_EditorClassIdentifier: 
+  <Metadata>k__BackingField:
+    <Name>k__BackingField: Gold
+    <Description>k__BackingField: 
+    <SmallIcon>k__BackingField: {fileID: 0}
+    <BigIcon>k__BackingField: {fileID: 0}
