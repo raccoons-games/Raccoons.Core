@@ -54,7 +54,7 @@ namespace Raccoons.Storage.Files
 
         protected override string GetStringInternal(string key)
         {
-            return File.ReadAllText(key);
+            return File.ReadAllText(PathOf(key));
         }
 
         protected override Task Schedule(Func<CancellationToken, Task> task, string key = null, CancellationToken token = default)
