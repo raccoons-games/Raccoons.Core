@@ -197,9 +197,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebb4827ba0deb4d94aec3ff9ba5aed8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemPrefab: {fileID: 2219617996015926172, guid: c41a9022151464d96a9061ad21b406bd, type: 3}
-  defaultSettings: {fileID: 11400000, guid: 83399c29a2cc24024b95adbe2755a18c, type: 2}
+  defaultSettings: {fileID: 11400000, guid: c1ce9c2e97d734452a4b7c3c36b4f4c0, type: 2}
   factory: {fileID: 222322061}
+  itemPrefab: {fileID: 2219617996015926172, guid: c41a9022151464d96a9061ad21b406bd, type: 3}
 --- !u!1 &847568220
 GameObject:
   m_ObjectHideFlags: 0
@@ -492,9 +492,7 @@ MonoBehaviour:
   endPoint: {fileID: 955397715}
   coinAmount: 10
   settingsAsset: {fileID: 11400000, guid: c6ddc1e2d958e4b1da1a5172d3ca8120, type: 2}
-  defaultSettingsAsset: {fileID: 0}
-  scatterSettingsAsset: {fileID: 0}
-  bounceSettingsAsset: {fileID: 0}
+  keyCode: 32
 --- !u!1 &1642069113
 GameObject:
   m_ObjectHideFlags: 0

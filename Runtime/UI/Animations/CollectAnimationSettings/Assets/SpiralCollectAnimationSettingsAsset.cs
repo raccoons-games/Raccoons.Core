@@ -38,7 +38,7 @@ namespace Raccoons.UI.Animations.CollectAnimationSettings.Assets
             sequence.Join(item.GetTransform().DOScale(endScale, animationDuration)
                 .SetEase(scaleCurve));
             
-            sequence.Join(DOTween.To(() => startAlpha, (alpha) => item.SetAlpha(alpha), endAlpha, animationDuration)
+            sequence.Join(DOTween.To(() => startAlpha, item.SetAlpha, endAlpha, animationDuration)
                 .SetEase(alphaCurve));
             
             await sequence.AsyncWaitForCompletion();

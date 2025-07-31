@@ -6,6 +6,7 @@ using Zenject;
 namespace Raccoons.UI.Animations.Installers
 {
     [RequireComponent(typeof(Pool))]
+    [RequireComponent(typeof(CollectAnimationSystem))]
     public class CollectAnimationInstaller : FactoryInstaller
     {
         [SerializeField] private CollectAnimationSystem collectAnimationSystem;
