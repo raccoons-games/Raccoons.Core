@@ -1,8 +1,10 @@
+using Raccoons.UI.Animations;
+using Raccoons.UI.Animations.CollectAnimationSettings;
+using Raccoons.UI.Animations.CollectAnimationSettings.Assets;
 using UnityEngine;
-using Cysharp.Threading.Tasks;
 using Zenject;
 
-namespace Raccoons.UI.Animations
+namespace Raccoons.Core.Samples.UI.Animations
 {
     public class CollectAnimationSample : MonoBehaviour
     {
@@ -11,38 +13,23 @@ namespace Raccoons.UI.Animations
         [SerializeField] private Transform endPoint;
         [SerializeField] private int coinAmount = 10;
         
-        [Inject] private CollectAnimationSystem _animationSystem;
+        [Header("Animation Settings")]
+        [SerializeField] private CollectAnimationSettingsAsset settingsAsset;
+        [SerializeField] private KeyCode keyCode = KeyCode.Space;
         
-        [ContextMenu("1 Test Default Animation")]
-        public async void TestDefaultAnimation()
+        private CollectAnimationSystem _collectAnimationSystem;
+
+        [Inject]
+        private void Construct(CollectAnimationSystem collectAnimationSystem)
         {
-            await _animationSystem.Launch(coinAmount, startPoint.position, endPoint.position, AnimationType.Default);
+            _collectAnimationSystem = collectAnimationSystem;
         }
-        
-        [ContextMenu("2 Test Scatter Animation")]
-        public async void TestScatterAnimation()
+
+        private async void Update()
         {
-            if (startPoint == null || endPoint == null) return;
-            
-            await _animationSystem.Launch(coinAmount, startPoint.position, endPoint.position, AnimationType.Scatter);
-        }
-        
-        [ContextMenu("3 Test Custom Settings")]
-        public async void TestCustomSettings()
-        {
-            if (startPoint == null || endPoint == null) return;
-            
-            var customSettings = ScriptableObject.CreateInstance<CollectAnimationSettings>();
-            
-            await _animationSystem.Launch(coinAmount, startPoint.position, endPoint.position, customSettings);
-        }
-        
-        private void Update()
-        {
-            // Example: Press Space to trigger animation
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(keyCode))
             {
-                TestDefaultAnimation();
+                await _collectAnimationSystem.Emit(coinAmount, startPoint.position, endPoint.position, settingsAsset);
             }
         }
     }
