@@ -228,7 +228,20 @@ public class BuildUtilityWindow : EditorWindow
 
         EditorUtility.RevealInFinder(path);
     }
+
+    internal static bool EnsureBuildTarget(BuildTargetGroup group, BuildTarget target)
+    {
+        if (EditorUserBuildSettings.activeBuildTarget == target)
+            return true;
+
+        var result = EditorUserBuildSettings.SwitchActiveBuildTarget(group, target);
+        if (!result)
+            Debug.LogError($"Failed to switch active build target to {target}");
+
+        return result;
+    }
 }
+
 
 public interface IPlatformBuildTab
 {
@@ -388,10 +401,27 @@ public class AndroidBuildTab : PlatformBuildTabBase
                 BuildAndroid(false, false);
             }
         }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Build & Run Dev APK"))
+            {
+                BuildAndroid(true, false, true);
+            }
+
+            if (GUILayout.Button("Build & Run Prod APK"))
+            {
+                BuildAndroid(false, false, true);
+            }
+        }
     }
 
-    private void BuildAndroid(bool development, bool appBundle)
+    private void BuildAndroid(bool development, bool appBundle, bool run = false)
     {
+        // Ensure correct build target
+        if (!BuildUtilityWindow.EnsureBuildTarget(BuildTargetGroup.Android, BuildTarget.Android))
+            return;
+
         Save();
 
         if (!development)
@@ -416,11 +446,15 @@ public class AndroidBuildTab : PlatformBuildTabBase
         var fileName = BuildUtilityWindow.GetBuildFileName(config, _bundleVersion, extension);
         var outputPath = Path.Combine(dir, fileName);
 
+        var buildOptions = development ? BuildOptions.Development : BuildOptions.None;
+        if (run)
+            buildOptions |= BuildOptions.AutoRunPlayer;
+
         var options = new BuildPlayerOptions
         {
             scenes = BuildUtilityWindow.GetEnabledScenes(),
             target = BuildTarget.Android,
-            options = development ? BuildOptions.Development : BuildOptions.None,
+            options = buildOptions,
             locationPathName = outputPath
         };
 
@@ -521,10 +555,27 @@ public class IosBuildTab : PlatformBuildTabBase
                 BuildIos(false);
             }
         }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Build & Run Dev"))
+            {
+                BuildIos(true, true);
+            }
+
+            if (GUILayout.Button("Build & Run Prod"))
+            {
+                BuildIos(false, true);
+            }
+        }
     }
 
-    private void BuildIos(bool development)
+    private void BuildIos(bool development, bool run = false)
     {
+        // Ensure correct build target
+        if (!BuildUtilityWindow.EnsureBuildTarget(BuildTargetGroup.iOS, BuildTarget.iOS))
+            return;
+
         Save();
 
         if (!development)
@@ -541,11 +592,15 @@ public class IosBuildTab : PlatformBuildTabBase
         var fileName = BuildUtilityWindow.GetBuildFileName(config, _build, null);
         var outputPath = Path.Combine(dir, fileName);
 
+        var buildOptions = development ? BuildOptions.Development : BuildOptions.None;
+        if (run)
+            buildOptions |= BuildOptions.AutoRunPlayer;
+
         var options = new BuildPlayerOptions
         {
             scenes = BuildUtilityWindow.GetEnabledScenes(),
             target = BuildTarget.iOS,
-            options = development ? BuildOptions.Development : BuildOptions.None,
+            options = buildOptions,
             locationPathName = outputPath
         };
 
@@ -620,10 +675,27 @@ public class WebBuildTab : PlatformBuildTabBase
                 BuildWeb(false);
             }
         }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Build & Run Dev"))
+            {
+                BuildWeb(true, true);
+            }
+
+            if (GUILayout.Button("Build & Run Prod"))
+            {
+                BuildWeb(false, true);
+            }
+        }
     }
 
-    private void BuildWeb(bool development)
+    private void BuildWeb(bool development, bool run = false)
     {
+        // Ensure correct build target
+        if (!BuildUtilityWindow.EnsureBuildTarget(BuildTargetGroup.WebGL, BuildTarget.WebGL))
+            return;
+
         Save();
 
         if (!development)
@@ -641,11 +713,15 @@ public class WebBuildTab : PlatformBuildTabBase
         var fileName = BuildUtilityWindow.GetBuildFileName(config, null, null);
         var outputPath = Path.Combine(dir, fileName);
 
+        var buildOptions = development ? BuildOptions.Development : BuildOptions.None;
+        if (run)
+            buildOptions |= BuildOptions.AutoRunPlayer;
+
         var options = new BuildPlayerOptions
         {
             scenes = BuildUtilityWindow.GetEnabledScenes(),
             target = BuildTarget.WebGL,
-            options = development ? BuildOptions.Development : BuildOptions.None,
+            options = buildOptions,
             locationPathName = outputPath
         };
 
@@ -672,9 +748,18 @@ public class WebBuildTab : PlatformBuildTabBase
 public class DesktopBuildTab : PlatformBuildTabBase
 {
     private const string DesktopBuildKey = "BuildUtility.Desktop.Build";
+    private const string DesktopTargetKey = "BuildUtility.Desktop.Target";
+
+    private enum DesktopTargetOption
+    {
+        Windows,
+        MacOS,
+        Linux
+    }
 
     private string _version;
     private int _build;
+    private DesktopTargetOption _targetOption;
 
     public override string Name => "Desktop";
 
@@ -682,12 +767,14 @@ public class DesktopBuildTab : PlatformBuildTabBase
     {
         _version = PlayerSettings.bundleVersion;
         _build = EditorPrefs.GetInt(DesktopBuildKey, 1);
+        _targetOption = (DesktopTargetOption)EditorPrefs.GetInt(DesktopTargetKey, (int)DesktopTargetOption.Windows);
     }
 
     public override void Save()
     {
         PlayerSettings.bundleVersion = _version;
         EditorPrefs.SetInt(DesktopBuildKey, _build);
+        EditorPrefs.SetInt(DesktopTargetKey, (int)_targetOption);
     }
 
     public override void OnGUI()
@@ -727,6 +814,16 @@ public class DesktopBuildTab : PlatformBuildTabBase
             }
         }
 
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            var newTarget = (DesktopTargetOption)EditorGUILayout.EnumPopup("Target", _targetOption);
+            if (newTarget != _targetOption)
+            {
+                _targetOption = newTarget;
+                EditorPrefs.SetInt(DesktopTargetKey, (int)_targetOption);
+            }
+        }
+
         EditorGUILayout.Space();
 
         using (new EditorGUILayout.HorizontalScope())
@@ -741,9 +838,36 @@ public class DesktopBuildTab : PlatformBuildTabBase
                 BuildDesktop(false);
             }
         }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Build & Run Dev"))
+            {
+                BuildDesktop(true, true);
+            }
+
+            if (GUILayout.Button("Build & Run Prod"))
+            {
+                BuildDesktop(false, true);
+            }
+        }
     }
 
-    private void BuildDesktop(bool development)
+    private BuildTarget GetSelectedTarget()
+    {
+        switch (_targetOption)
+        {
+            case DesktopTargetOption.MacOS:
+                return BuildTarget.StandaloneOSX;
+            case DesktopTargetOption.Linux:
+                return BuildTarget.StandaloneLinux64;
+            case DesktopTargetOption.Windows:
+            default:
+                return BuildTarget.StandaloneWindows64;
+        }
+    }
+
+    private void BuildDesktop(bool development, bool run = false)
     {
         Save();
 
@@ -753,16 +877,10 @@ public class DesktopBuildTab : PlatformBuildTabBase
                 return;
         }
 
-        // Build for current active standalone target
-        var target = EditorUserBuildSettings.activeBuildTarget;
-        if (target != BuildTarget.StandaloneWindows &&
-            target != BuildTarget.StandaloneWindows64 &&
-            target != BuildTarget.StandaloneOSX &&
-            target != BuildTarget.StandaloneLinux64)
-        {
-            Debug.LogError("Active build target is not a standalone platform.");
+        var target = GetSelectedTarget();
+
+        if (!BuildUtilityWindow.EnsureBuildTarget(BuildTargetGroup.Standalone, target))
             return;
-        }
 
         var config = development ? "Dev" : "Prod";
         var root = "Builds/Desktop";
@@ -779,16 +897,23 @@ public class DesktopBuildTab : PlatformBuildTabBase
             case BuildTarget.StandaloneOSX:
                 extension = "app";
                 break;
+            case BuildTarget.StandaloneLinux64:
+                extension = null; // usually no extension
+                break;
         }
 
         var fileName = BuildUtilityWindow.GetBuildFileName(config, _build, extension);
         var outputPath = Path.Combine(dir, fileName);
 
+        var buildOptions = development ? BuildOptions.Development : BuildOptions.None;
+        if (run)
+            buildOptions |= BuildOptions.AutoRunPlayer;
+
         var options = new BuildPlayerOptions
         {
             scenes = BuildUtilityWindow.GetEnabledScenes(),
             target = target,
-            options = development ? BuildOptions.Development : BuildOptions.None,
+            options = buildOptions,
             locationPathName = outputPath
         };
 
