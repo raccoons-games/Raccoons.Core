@@ -220,6 +220,14 @@ public class BuildUtilityWindow : EditorWindow
 
         return fileName;
     }
+
+    internal static void RevealBuildPath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        EditorUtility.RevealInFinder(path);
+    }
 }
 
 public interface IPlatformBuildTab
@@ -419,16 +427,17 @@ public class AndroidBuildTab : PlatformBuildTabBase
         EditorUserBuildSettings.buildAppBundle = appBundle;
 
         var report = BuildPipeline.BuildPlayer(options);
-        LogReport(report);
+        LogReport(report, outputPath);
     }
 
-    private static void LogReport(BuildReport report)
+    private static void LogReport(BuildReport report, string outputPath)
     {
         if (report == null) return;
 
         if (report.summary.result == BuildResult.Succeeded)
         {
             Debug.Log($"Android build succeeded: {report.summary.totalSize / (1024 * 1024f):0.0} MB");
+            BuildUtilityWindow.RevealBuildPath(outputPath);
         }
         else
         {
@@ -541,16 +550,17 @@ public class IosBuildTab : PlatformBuildTabBase
         };
 
         var report = BuildPipeline.BuildPlayer(options);
-        LogReport(report);
+        LogReport(report, outputPath);
     }
 
-    private static void LogReport(BuildReport report)
+    private static void LogReport(BuildReport report, string outputPath)
     {
         if (report == null) return;
 
         if (report.summary.result == BuildResult.Succeeded)
         {
             Debug.Log("iOS build succeeded.");
+            BuildUtilityWindow.RevealBuildPath(outputPath);
         }
         else
         {
@@ -640,16 +650,17 @@ public class WebBuildTab : PlatformBuildTabBase
         };
 
         var report = BuildPipeline.BuildPlayer(options);
-        LogReport(report);
+        LogReport(report, outputPath);
     }
 
-    private static void LogReport(BuildReport report)
+    private static void LogReport(BuildReport report, string outputPath)
     {
         if (report == null) return;
 
         if (report.summary.result == BuildResult.Succeeded)
         {
             Debug.Log("WebGL build succeeded.");
+            BuildUtilityWindow.RevealBuildPath(outputPath);
         }
         else
         {
@@ -782,16 +793,17 @@ public class DesktopBuildTab : PlatformBuildTabBase
         };
 
         var report = BuildPipeline.BuildPlayer(options);
-        LogReport(report);
+        LogReport(report, outputPath);
     }
 
-    private static void LogReport(BuildReport report)
+    private static void LogReport(BuildReport report, string outputPath)
     {
         if (report == null) return;
 
         if (report.summary.result == BuildResult.Succeeded)
         {
             Debug.Log("Desktop build succeeded.");
+            BuildUtilityWindow.RevealBuildPath(outputPath);
         }
         else
         {
