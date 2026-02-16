@@ -29,7 +29,7 @@ namespace Raccoons.Builds
             ShowEditableTagDialog(suggestedTag, currentBranch);
         }
         
-        public static void ShowGitTagDialogForBuild(string buildType)
+        public static void ShowGitTagDialogForBuild()
         {
             string currentBranch = GetCurrentBranch();
             
@@ -47,7 +47,7 @@ namespace Raccoons.Builds
             
             string version = PlayerSettings.bundleVersion;
             int bundleCode = PlayerSettings.Android.bundleVersionCode;
-            string suggestedTag = $"v{version}-{buildType}-{bundleCode}";
+            string suggestedTag = $"v{version}-{bundleCode}";
             
             if (TagExists(suggestedTag))
             {
@@ -104,12 +104,30 @@ namespace Raccoons.Builds
             
             if (string.IsNullOrEmpty(result))
             {
-                UnityEngine.Debug.Log($"[GitTag] Created tag locally: {tagName}");
-                EditorUtility.DisplayDialog(
-                    "Git Tag Created",
-                    $"Tag '{tagName}' created successfully!\n\nNote: Tag is local only. Push manually if needed.",
-                    "OK"
-                );
+                UnityEngine.Debug.Log($"[GitTag] Created tag: {tagName}");
+                
+                // Push the tag to remote
+                string pushCommand = $"git push origin {tagName}";
+                string pushResult = ExecuteGitCommand(pushCommand);
+                
+                if (string.IsNullOrEmpty(pushResult))
+                {
+                    UnityEngine.Debug.Log($"[GitTag] Pushed tag to remote: {tagName}");
+                    EditorUtility.DisplayDialog(
+                        "Git Tag Created & Pushed",
+                        $"Tag '{tagName}' created and pushed successfully!",
+                        "OK"
+                    );
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError($"[GitTag] Failed to push tag: {pushResult}");
+                    EditorUtility.DisplayDialog(
+                        "Push Failed",
+                        $"Tag created locally but push failed:\n\n{pushResult}\n\nYou can push manually with:\ngit push origin {tagName}",
+                        "OK"
+                    );
+                }
             }
             else
             {

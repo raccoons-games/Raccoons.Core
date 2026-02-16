@@ -3,7 +3,6 @@ namespace Raccoons.Builds.Adapters
     public abstract class BaseBuildSettingsAdapter: IBuildSettingsAdapter
     {
         private static BaseBuildSettingsAdapter _instance;
-        public BaseBuildSettingsAdapter Instance => _instance;
 
         public BaseBuildSettingsAdapter()
         {

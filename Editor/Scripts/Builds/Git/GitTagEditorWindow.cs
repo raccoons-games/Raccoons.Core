@@ -61,6 +61,16 @@ namespace Raccoons.Builds
                 return;
             }
             
+            bool confirmed = EditorUtility.DisplayDialog(
+                "Confirm Git Tag Creation",
+                $"Create git tag '{_tagName}'?\n\nBranch: {_currentBranch}\n\nThis tag will be created locally.",
+                "Create",
+                "Cancel"
+            );
+            
+            if (!confirmed)
+                return;
+            
             if (GitTagHelper.TagExists(_tagName))
             {
                 bool overwrite = EditorUtility.DisplayDialog(

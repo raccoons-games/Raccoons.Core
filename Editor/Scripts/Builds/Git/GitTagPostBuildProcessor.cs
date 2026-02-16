@@ -11,7 +11,7 @@ namespace Raccoons.Builds
         
         public void OnPostprocessBuild(BuildReport report)
         {
-            if (report.summary.result != BuildResult.Succeeded && report.summary.result != BuildResult.Unknown)
+            if (report.summary.result == BuildResult.Failed || report.summary.result == BuildResult.Cancelled)
                 return;
             
             if (report.summary.platform != BuildTarget.Android)
@@ -20,10 +20,8 @@ namespace Raccoons.Builds
             if (!EditorUserBuildSettings.buildAppBundle)
                 return;
             
-            bool isDevelopment = report.summary.options.HasFlag(BuildOptions.Development);
-            string buildType = isDevelopment ? "dev" : "prod";
             
-            GitTagHelper.ShowGitTagDialogForBuild(buildType);
+            GitTagHelper.ShowGitTagDialogForBuild();
         }
     }
 }
