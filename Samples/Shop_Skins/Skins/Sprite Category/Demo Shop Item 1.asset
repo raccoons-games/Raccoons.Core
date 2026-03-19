@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdbc3fe79da71b24a93df34f19d13eab, type: 3}
+  m_Name: Demo Shop Item 1
+  m_EditorClassIdentifier: 
+  <IsFree>k__BackingField: 1
+  <Price>k__BackingField: 0
+  <AdPurchase>k__BackingField: 0
+  <AdViewsRequired>k__BackingField: 0
+  category: {fileID: 11400000, guid: 739b7687eb1365643b5bc69ceac73d6c, type: 2}
+  background: {fileID: 21300000, guid: 654171fab45a1184b97bbc51269fc448, type: 3}
