@@ -1,6 +1,7 @@
+using Raccoons.Products;
 using Zenject;
 
-namespace Raccoons.Core.Runtime.Shop
+namespace Raccoons.UI.Shops
 {
     public class ShopButtonRedDot : BaseRedDotComponent
     {

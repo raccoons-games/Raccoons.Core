@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Raccoons.Core.Runtime.Shop
+namespace Raccoons.UI.Shops
 {
     public abstract class BaseRedDotComponent : MonoBehaviour
     {
