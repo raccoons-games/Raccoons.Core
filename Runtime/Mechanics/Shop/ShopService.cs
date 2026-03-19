@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Raccoons.Scores;
 using Raccoons.Storage;
 using Zenject;
@@ -27,9 +29,12 @@ namespace Raccoons.Products
             _scoreBank = scoreBank;
             _storage = storage;
         }
-
-        public void Initialize() { }
-
+        
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            
+        }
+        
         public bool CanPurchaseAny()
         {
             foreach (BaseShopItemAsset item in _shopItemsRegistry.Items)
