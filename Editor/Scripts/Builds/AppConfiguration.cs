@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Raccoons.Builds.Adapters.SRDebuggerAdapter;
 using UnityEngine;
 
 namespace Raccoons.Builds
@@ -15,6 +17,12 @@ namespace Raccoons.Builds
         [SerializeField] private AppMode standardBuildAppMode = AppMode.Prod;
         [SerializeField] private bool activateDebugObjectsInProd;
 
+        [Header("Adapter Settings")]
+        [SerializeField]
+        private SrDebuggerBuildSettings debuggerBuildSettings;
+
+        public SrDebuggerBuildSettings DebuggerBuildSettings => debuggerBuildSettings;
+        
         public AppMode EditorAppMode => editorAppMode;
         public AppMode DevelopmentBuildAppMode => developmentBuildAppMode;
         public AppMode StandardBuildAppMode => standardBuildAppMode;
@@ -53,5 +61,13 @@ namespace Raccoons.Builds
         {
             return GetMode() == AppMode.Dev || Get().ActivateDebugObjectsInProd;
         }
+
+#if UNITY_EDITOR
+        public IEnumerable<BaseBuildAdapterSettings> GetAllAdapterSettings()
+        {
+            if (debuggerBuildSettings != null)
+                yield return debuggerBuildSettings;
+        }
+#endif
     }
 }
