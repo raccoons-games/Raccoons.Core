@@ -11,10 +11,10 @@ namespace Raccoons.Editor.Drawers
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
-            
+
             float y = position.y;
-            
-            string adapterName = GetAdapterName();
+
+            string adapterName = GetAdapterName(property);
             
             var headerRect = new Rect(position.x, y, position.width, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(headerRect, $"{adapterName} Settings", EditorStyles.boldLabel);
@@ -73,16 +73,13 @@ namespace Raccoons.Editor.Drawers
             return height;
         }
         
-        private string GetAdapterName()
+        private string GetAdapterName(SerializedProperty property)
         {
-            if (fieldInfo != null)
-            {
-                string typeName = fieldInfo.FieldType.Name;
-                typeName = typeName.Replace("Settings", "").Replace("BuildAdapter", "");
-                
-                return System.Text.RegularExpressions.Regex.Replace(typeName, "(\\B[A-Z])", " $1");
-            }
-            
+            // For [SerializeReference] fields, resolve the concrete runtime type via the managed reference value
+            var settings = property.managedReferenceValue as BaseBuildAdapterSettings;
+            if (settings != null)
+                return settings.GetAdapterName();
+
             return "Adapter";
         }
     }

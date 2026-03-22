@@ -22,9 +22,12 @@ namespace Raccoons.Editor
             ),
         };
 
+        private static readonly string[] TabNames = { "All", "Enabled", "Detected" };
+
         private Vector2 _scrollPosition;
         private string _searchFilter = string.Empty;
         private bool _applyToAllPlatforms;
+        private int _selectedTab;
         private bool[] _enabledStates;
 
         // Styles (initialized lazily in OnGUI to avoid domain-reload issues)
@@ -146,6 +149,20 @@ namespace Raccoons.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.Space(12);
+                var newTab = GUILayout.Toolbar(_selectedTab, TabNames, GUILayout.ExpandWidth(true));
+                if (newTab != _selectedTab)
+                {
+                    _selectedTab = newTab;
+                    Repaint();
+                }
+                GUILayout.Space(12);
+            }
+
+            EditorGUILayout.Space(4);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Space(12);
                 _applyToAllPlatforms = EditorGUILayout.ToggleLeft(
                     new GUIContent("Apply to all platforms",
                         "When enabled, changes affect define symbols on all build target groups, not just the currently selected one."),
@@ -163,9 +180,23 @@ namespace Raccoons.Editor
         private void DrawIntegrationsList()
         {
             var query = _searchFilter.Trim().ToLowerInvariant();
+
+            IEnumerable<IntegrationDefinition> source = AllIntegrations;
+
+            // Tab filter
+            switch (_selectedTab)
+            {
+                case 1: // Enabled
+                    source = source.Where(i => _enabledStates[Array.IndexOf(AllIntegrations, i)]);
+                    break;
+                case 2: // Detected
+                    source = source.Where(i => i.IsPackageInstalled());
+                    break;
+            }
+
             var filtered = string.IsNullOrEmpty(query)
-                ? AllIntegrations
-                : AllIntegrations.Where(i =>
+                ? source.ToArray()
+                : source.Where(i =>
                     i.Name.ToLowerInvariant().Contains(query) ||
                     i.Category.ToLowerInvariant().Contains(query) ||
                     i.Description.ToLowerInvariant().Contains(query)).ToArray();
@@ -175,8 +206,13 @@ namespace Raccoons.Editor
             if (filtered.Length == 0)
             {
                 EditorGUILayout.Space(32);
-                EditorGUILayout.LabelField("No integrations match your search.",
-                    EditorStyles.centeredGreyMiniLabel);
+                var emptyMessage = _selectedTab switch
+                {
+                    1 => "No integrations are currently enabled.",
+                    2 => "No integrations were detected in this project.",
+                    _ => "No integrations match your search."
+                };
+                EditorGUILayout.LabelField(emptyMessage, EditorStyles.centeredGreyMiniLabel);
             }
             else
             {

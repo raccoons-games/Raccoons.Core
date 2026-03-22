@@ -1,16 +1,22 @@
 #if RACCOONS_INTEGRATION_SRDEBUGGER
+using Raccoons.Builds.Adapters;
 using SRDebugger;
 using UnityEditor;
 using UnityEngine;
 
 namespace Raccoons.Builds.Adapters.SRDebugger
 {
-    public class SRDebuggerBuildAdapter: BaseBuildSettingsAdapter
+    public class SRDebuggerBuildAdapter : BaseBuildSettingsAdapter
     {
+        public override BaseBuildAdapterSettings CreateDefaultSettings()
+        {
+            return new SrDebuggerBuildSettings();
+        }
+
         public override void ApplySettings(AppConfiguration appConfiguration)
         {
             var srSettings = Settings.Instance;
-            var adapterSettings = appConfiguration.DebuggerBuildSettings;
+            var adapterSettings = appConfiguration.GetSettings<SrDebuggerBuildSettings>();
 
             if (srSettings != null && adapterSettings != null)
             {

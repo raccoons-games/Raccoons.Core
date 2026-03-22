@@ -2,7 +2,8 @@ namespace Raccoons.Builds.Adapters
 {
     public interface IBuildSettingsAdapter
     {
-        public void ApplySettings(AppConfiguration appConfiguration);
-        public bool i_IsAvailable();
+        void ApplySettings(AppConfiguration appConfiguration);
+        bool i_IsAvailable();
+        BaseBuildAdapterSettings CreateDefaultSettings();
     }
 }

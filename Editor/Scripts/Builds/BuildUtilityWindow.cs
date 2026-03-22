@@ -6,10 +6,6 @@ using UnityEngine;
 using Raccoons.Builds;
 using Raccoons.Builds.Adapters;
 
-#if RACCOONS_INTEGRATION_SRDEBUGGER
-using Raccoons.Builds.Adapters.SRDebugger;
-#endif
-
 public class BuildUtilityWindow : EditorWindow
 {
     private IPlatformBuildTab[] _tabs;
@@ -157,11 +153,33 @@ public class BuildUtilityWindow : EditorWindow
         var config = AppConfiguration.Get();
         if (config != null)
         {
+            EnsureAdapterSettings(config);
             _appConfigurationSO = new SerializedObject(config);
         }
         else
         {
             _appConfigurationSO = null;
+        }
+    }
+
+    private void EnsureAdapterSettings(AppConfiguration config)
+    {
+        bool changed = false;
+        foreach (var adapter in AdapterRegistry.GetActiveAdapters())
+        {
+            var defaultSettings = adapter.CreateDefaultSettings();
+            if (defaultSettings != null && config.FindSettings(defaultSettings.GetType()) == null)
+            {
+                Undo.RecordObject(config, "Add Adapter Settings");
+                config.EnsureSettings(defaultSettings);
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
         }
     }
 
@@ -275,10 +293,12 @@ public class BuildUtilityWindow : EditorWindow
 
     private void RenderAdapterSettings()
     {
-#if RACCOONS_INTEGRATION_SRDEBUGGER
-        if(SRDebuggerBuildAdapter.IsAvailable())
-            EditorGUILayout.PropertyField(_appConfigurationSO.FindProperty("debuggerBuildSettings"));
-#endif
+        var settingsProp = _appConfigurationSO.FindProperty("adapterSettings");
+        if (settingsProp == null || settingsProp.arraySize == 0)
+            return;
+
+        for (int i = 0; i < settingsProp.arraySize; i++)
+            EditorGUILayout.PropertyField(settingsProp.GetArrayElementAtIndex(i), GUIContent.none, true);
     }
 
     internal static bool ConfirmProdBuildIfNeeded()
