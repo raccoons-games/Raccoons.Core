@@ -1,4 +1,5 @@
-namespace Raccoons.Builds.Adapters.SRDebuggerAdapter
+#if RACCOONS_INTEGRATION_SRDEBUGGER
+namespace Raccoons.Builds.Adapters.SRDebugger
 {
     [System.Serializable]
     public class SrDebuggerBuildSettings: BaseBuildAdapterSettings
@@ -14,3 +15,4 @@ namespace Raccoons.Builds.Adapters.SRDebuggerAdapter
         }
     }
 }
+#endif

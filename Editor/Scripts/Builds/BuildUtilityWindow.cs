@@ -6,6 +6,10 @@ using UnityEngine;
 using Raccoons.Builds;
 using Raccoons.Builds.Adapters;
 
+#if RACCOONS_INTEGRATION_SRDEBUGGER
+using Raccoons.Builds.Adapters.SRDebugger;
+#endif
+
 public class BuildUtilityWindow : EditorWindow
 {
     private IPlatformBuildTab[] _tabs;
@@ -271,8 +275,10 @@ public class BuildUtilityWindow : EditorWindow
 
     private void RenderAdapterSettings()
     {
+#if RACCOONS_INTEGRATION_SRDEBUGGER
         if(SRDebuggerBuildAdapter.IsAvailable())
             EditorGUILayout.PropertyField(_appConfigurationSO.FindProperty("debuggerBuildSettings"));
+#endif
     }
 
     internal static bool ConfirmProdBuildIfNeeded()

@@ -1,5 +1,8 @@
 using System.Collections.Generic;
-using Raccoons.Builds.Adapters.SRDebuggerAdapter;
+using Raccoons.Builds.Adapters;
+#if RACCOONS_INTEGRATION_SRDEBUGGER
+using Raccoons.Builds.Adapters.SRDebugger;
+#endif
 using UnityEngine;
 
 namespace Raccoons.Builds
@@ -18,10 +21,13 @@ namespace Raccoons.Builds
         [SerializeField] private bool activateDebugObjectsInProd;
 
         [Header("Adapter Settings")]
+#if RACCOONS_INTEGRATION_SRDEBUGGER
         [SerializeField]
         private SrDebuggerBuildSettings debuggerBuildSettings;
 
         public SrDebuggerBuildSettings DebuggerBuildSettings => debuggerBuildSettings;
+#endif
+        
         
         public AppMode EditorAppMode => editorAppMode;
         public AppMode DevelopmentBuildAppMode => developmentBuildAppMode;
@@ -65,8 +71,12 @@ namespace Raccoons.Builds
 #if UNITY_EDITOR
         public IEnumerable<BaseBuildAdapterSettings> GetAllAdapterSettings()
         {
+#if RACCOONS_INTEGRATION_SRDEBUGGER
             if (debuggerBuildSettings != null)
                 yield return debuggerBuildSettings;
+#else
+            yield break;
+#endif
         }
 #endif
     }

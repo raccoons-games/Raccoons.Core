@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-using Raccoons.Builds.Adapters.SRDebuggerAdapter;
+using Raccoons.Builds.Adapters;
 using UnityEditor;
 using UnityEngine;
 

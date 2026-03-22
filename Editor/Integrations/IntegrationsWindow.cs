@@ -16,7 +16,8 @@ namespace Raccoons.Editor
                 category: "Debug",
                 description: "Runtime debug panel with console, profiler, options system, and bug reporter. Tap the corner trigger to open at runtime.",
                 packageId: "com.stompyrobot.srdebugger",
-                detectionType: "SRDebugger.SROptions",
+                detectionType: "SRDebugger.Settings",
+                assemblyName: "StompyRobot.SRDebugger",
                 documentationUrl: "https://stompyrobot.uk/tools/srdebugger/documentation/"
             ),
         };
@@ -419,12 +420,14 @@ namespace Raccoons.Editor
         public string Description { get; }
         public string PackageId { get; }
         public string DetectionType { get; }
+        public string AssemblyName { get; }
         public string DocumentationUrl { get; }
 
         public IntegrationDefinition(
             string name, string symbol, string category,
             string description, string packageId = "",
-            string detectionType = "", string documentationUrl = "")
+            string detectionType = "", string assemblyName = "",
+            string documentationUrl = "")
         {
             Name = name;
             Symbol = symbol;
@@ -432,21 +435,32 @@ namespace Raccoons.Editor
             Description = description;
             PackageId = packageId;
             DetectionType = detectionType;
+            AssemblyName = assemblyName;
             DocumentationUrl = documentationUrl;
         }
 
         /// <summary>
-        /// Returns true if the integration's assembly/type is present in the loaded domain.
-        /// Falls back to true when no detection type is specified.
+        /// Returns true if the package is detected via type lookup (works for both UPM and
+        /// .unitypackage installs) or via assembly definition asset (UPM installs).
+        /// Returns true when no detection hints are specified.
         /// </summary>
         public bool IsPackageInstalled()
         {
-            if (string.IsNullOrEmpty(DetectionType)) return true;
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            if (!string.IsNullOrEmpty(DetectionType))
             {
-                if (assembly.GetType(DetectionType) != null) return true;
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    if (assembly.GetType(DetectionType) != null) return true;
+                }
             }
-            return false;
+
+            if (!string.IsNullOrEmpty(AssemblyName))
+            {
+                if (AssetDatabase.FindAssets($"t:AssemblyDefinitionAsset {AssemblyName}").Length > 0)
+                    return true;
+            }
+
+            return string.IsNullOrEmpty(DetectionType) && string.IsNullOrEmpty(AssemblyName);
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace Raccoons.Builds.Adapters.SRDebuggerAdapter
+namespace Raccoons.Builds.Adapters
 {
     [System.Serializable]
     public abstract class BaseBuildAdapterSettings

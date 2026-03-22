@@ -1,8 +1,9 @@
+#if RACCOONS_INTEGRATION_SRDEBUGGER
 using SRDebugger;
 using UnityEditor;
 using UnityEngine;
 
-namespace Raccoons.Builds.Adapters
+namespace Raccoons.Builds.Adapters.SRDebugger
 {
     public class SRDebuggerBuildAdapter: BaseBuildSettingsAdapter
     {
@@ -10,12 +11,13 @@ namespace Raccoons.Builds.Adapters
         {
             var srSettings = Settings.Instance;
             var adapterSettings = appConfiguration.DebuggerBuildSettings;
-        
+
             if (srSettings != null && adapterSettings != null)
             {
                 if (adapterSettings.IsEnabled)
                 {
                     srSettings.EnableTrigger = Settings.TriggerEnableModes.Enabled;
+                    srSettings.TriggerBehaviour = Settings.TriggerBehaviours.TripleTap;
                 }
                 else
                 {
@@ -25,11 +27,22 @@ namespace Raccoons.Builds.Adapters
                 Debug.Log($"[SRDebuggerAdapter] Applied settings: IsEnabled={adapterSettings.IsEnabled}");
             }
         }
-        
+
         public override bool i_IsAvailable()
         {
-            return AssetDatabase.FindAssets("t:AssemblyDefinitionAsset StompyRobot.SRDebugger")
-                .Length > 0;
+            // UPM install: dedicated assembly definition exists
+            if (AssetDatabase.FindAssets("t:AssemblyDefinitionAsset StompyRobot.SRDebugger").Length > 0)
+                return true;
+
+            // .unitypackage install: scripts end up in Assembly-CSharp, check by type
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (assembly.GetType("SRDebugger.SROptions") != null)
+                    return true;
+            }
+
+            return false;
         }
     }
 }
+#endif
