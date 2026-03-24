@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using Raccoons.Builds;
+using Raccoons.Builds.Adapters;
 
 public class BuildUtilityWindow : EditorWindow
 {
@@ -12,6 +13,7 @@ public class BuildUtilityWindow : EditorWindow
     private int _selectedTab;
 
     private SerializedObject _appConfigurationSO;
+    private Texture2D _gitIcon;
 
     [MenuItem("Raccoons/Build Utility")]
     public static void Open()
@@ -38,6 +40,22 @@ public class BuildUtilityWindow : EditorWindow
         }
 
         InitAppConfigurationSerializedObject();
+        LoadGitIcon();
+    }
+    
+    private void LoadGitIcon()
+    {
+        string iconPath = "Assets/_Packages/Raccoons.Core/Editor/Art/git-icon.png";
+        _gitIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+        
+        if (_gitIcon == null)
+        {
+            Debug.LogWarning($"[BuildUtility] Git icon not found at {iconPath}");
+        }
+        else
+        {
+            Debug.Log($"[BuildUtility] Git icon loaded successfully from {iconPath}");
+        }
     }
 
     private void OnDisable()
@@ -77,6 +95,57 @@ public class BuildUtilityWindow : EditorWindow
         {
             _tabs[_selectedTab].OnGUI();
         }
+        
+        GUILayout.FlexibleSpace();
+        
+        
+        DrawGitTagButton();
+    }
+    
+    private void DrawGitTagButton()
+    {
+        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+        
+        // Create black background texture
+        Texture2D blackTexture = new Texture2D(1, 1);
+        blackTexture.SetPixel(0, 0, new Color(0.15f, 0.15f, 0.15f));
+        blackTexture.Apply();
+        
+        Texture2D hoverTexture = new Texture2D(1, 1);
+        hoverTexture.SetPixel(0, 0, new Color(0.25f, 0.25f, 0.25f));
+        hoverTexture.Apply();
+        
+        buttonStyle.normal.background = blackTexture;
+        buttonStyle.hover.background = hoverTexture;
+        buttonStyle.active.background = hoverTexture;
+        buttonStyle.normal.textColor = Color.white;
+        buttonStyle.hover.textColor = Color.white;
+        buttonStyle.active.textColor = Color.white;
+        buttonStyle.fontSize = 13;
+        buttonStyle.fontStyle = FontStyle.Bold;
+        buttonStyle.alignment = TextAnchor.MiddleCenter;
+        
+        string buttonText = _gitIcon != null ? "  Create Git Tag" : "Create Git Tag";
+        GUIContent buttonContent = new GUIContent(buttonText);
+        
+        Rect buttonRect = GUILayoutUtility.GetRect(buttonContent, buttonStyle, GUILayout.Height(40));
+        
+        if (GUI.Button(buttonRect, buttonContent, buttonStyle))
+        {
+            GitTagHelper.ShowGitTagDialog();
+        }
+        
+        // Draw icon on the right side
+        if (_gitIcon != null)
+        {
+            Rect iconRect = new Rect(
+                buttonRect.x + buttonRect.width - 28,
+                buttonRect.y + (buttonRect.height - 20) / 2,
+                20,
+                20
+            );
+            GUI.DrawTexture(iconRect, _gitIcon);
+        }
     }
 
     private void InitAppConfigurationSerializedObject()
@@ -84,11 +153,33 @@ public class BuildUtilityWindow : EditorWindow
         var config = AppConfiguration.Get();
         if (config != null)
         {
+            EnsureAdapterSettings(config);
             _appConfigurationSO = new SerializedObject(config);
         }
         else
         {
             _appConfigurationSO = null;
+        }
+    }
+
+    private void EnsureAdapterSettings(AppConfiguration config)
+    {
+        bool changed = false;
+        foreach (var adapter in AdapterRegistry.GetActiveAdapters())
+        {
+            var defaultSettings = adapter.CreateDefaultSettings();
+            if (defaultSettings != null && config.FindSettings(defaultSettings.GetType()) == null)
+            {
+                Undo.RecordObject(config, "Add Adapter Settings");
+                config.EnsureSettings(defaultSettings);
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
         }
     }
 
@@ -135,6 +226,14 @@ public class BuildUtilityWindow : EditorWindow
         EditorGUILayout.PropertyField(_appConfigurationSO.FindProperty("developmentBuildAppMode"));
         EditorGUILayout.PropertyField(_appConfigurationSO.FindProperty("standardBuildAppMode"));
         EditorGUILayout.PropertyField(_appConfigurationSO.FindProperty("activateDebugObjectsInProd"));
+        
+        EditorGUILayout.Space();
+        
+        DrawAdapterSettingsButtons(config);
+        
+        EditorGUILayout.Space();
+        
+        RenderAdapterSettings();
         if (EditorGUI.EndChangeCheck())
         {
             _appConfigurationSO.ApplyModifiedProperties();
@@ -143,6 +242,63 @@ public class BuildUtilityWindow : EditorWindow
 
         EditorGUILayout.Space();
         EditorGUILayout.EndVertical();
+    }
+
+    private void DrawAdapterSettingsButtons(AppConfiguration config)
+    {
+        EditorGUILayout.BeginHorizontal();
+        
+        if (GUILayout.Button("Set Dev", GUILayout.Height(25)))
+        {
+            SetAllAdaptersToDevSettings(config);
+        }
+        
+        if (GUILayout.Button("Set Prod", GUILayout.Height(25)))
+        {
+            SetAllAdaptersToProdSettings(config);
+        }
+        
+        EditorGUILayout.EndHorizontal();
+    }
+
+    private void SetAllAdaptersToDevSettings(AppConfiguration config)
+    {
+        Undo.RecordObject(config, "Set All Adapters to Dev Settings");
+        
+        foreach (var adapterSettings in config.GetAllAdapterSettings())
+        {
+            adapterSettings.SetDefaultDevSettings();
+        }
+        
+        _appConfigurationSO.Update();
+        EditorUtility.SetDirty(config);
+        
+        Debug.Log("[BuildUtility] Set all adapter settings to Dev defaults");
+    }
+
+    private void SetAllAdaptersToProdSettings(AppConfiguration config)
+    {
+        Undo.RecordObject(config, "Set All Adapters to Prod Settings");
+        
+        foreach (var adapterSettings in config.GetAllAdapterSettings())
+        {
+            adapterSettings.SetDefaultProdSettings();
+        }
+        
+        _appConfigurationSO.Update();
+        EditorUtility.SetDirty(config);
+        
+        Debug.Log("[BuildUtility] Set all adapter settings to Prod defaults");
+    }
+
+    private void RenderAdapterSettings()
+    {
+        var settingsProp = _appConfigurationSO.FindProperty("adapterSettings");
+        if (settingsProp == null || settingsProp.arraySize == 0)
+            return;
+
+        for (int i = 0; i < settingsProp.arraySize; i++)
+            EditorGUILayout.PropertyField(settingsProp.GetArrayElementAtIndex(i), GUIContent.none, true);
     }
 
     internal static bool ConfirmProdBuildIfNeeded()
@@ -418,10 +574,11 @@ public class AndroidBuildTab : PlatformBuildTabBase
 
     private void BuildAndroid(bool development, bool appBundle, bool run = false)
     {
-        // Ensure correct build target
         if (!BuildUtilityWindow.EnsureBuildTarget(BuildTargetGroup.Android, BuildTarget.Android))
             return;
 
+        ApplyAdapterSettings();
+        
         Save();
 
         if (!development)
@@ -462,6 +619,14 @@ public class AndroidBuildTab : PlatformBuildTabBase
 
         var report = BuildPipeline.BuildPlayer(options);
         LogReport(report, outputPath);
+    }
+
+    private void ApplyAdapterSettings()
+    {
+        foreach (IBuildSettingsAdapter activeAdapter in AdapterRegistry.GetActiveAdapters())
+        {
+            activeAdapter.ApplySettings(AppConfiguration.Get());
+        }
     }
 
     private static void LogReport(BuildReport report, string outputPath)
