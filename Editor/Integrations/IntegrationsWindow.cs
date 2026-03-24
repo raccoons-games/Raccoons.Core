@@ -18,7 +18,8 @@ namespace Raccoons.Editor
                 packageId: "com.stompyrobot.srdebugger",
                 detectionType: "SRDebugger.Settings",
                 assemblyName: "StompyRobot.SRDebugger",
-                documentationUrl: "https://stompyrobot.uk/tools/srdebugger/documentation/"
+                documentationUrl: "https://stompyrobot.uk/tools/srdebugger/documentation/",
+                downloadUrl: "https://www.notion.so/SRDebugger-32ddd2ff91dd8051b586ee37ed05ab4e?v=22ddd2ff91dd80279e4e000cc64bec02&source=copy_link"
             ),
         };
 
@@ -317,6 +318,14 @@ namespace Raccoons.Editor
 
                         GUILayout.FlexibleSpace();
 
+                        if (!string.IsNullOrEmpty(integration.DownloadUrl))
+                        {
+                            if (GUILayout.Button("Download", EditorStyles.miniButton,
+                                    GUILayout.ExpandWidth(false)))
+                                Application.OpenURL(integration.DownloadUrl);
+                            GUILayout.Space(4);
+                        }
+
                         if (!string.IsNullOrEmpty(integration.DocumentationUrl))
                         {
                             if (GUILayout.Button("Docs →", EditorStyles.linkLabel,
@@ -458,12 +467,13 @@ namespace Raccoons.Editor
         public string DetectionType { get; }
         public string AssemblyName { get; }
         public string DocumentationUrl { get; }
+        public string DownloadUrl { get; }
 
         public IntegrationDefinition(
             string name, string symbol, string category,
             string description, string packageId = "",
             string detectionType = "", string assemblyName = "",
-            string documentationUrl = "")
+            string documentationUrl = "", string downloadUrl = "")
         {
             Name = name;
             Symbol = symbol;
@@ -473,6 +483,7 @@ namespace Raccoons.Editor
             DetectionType = detectionType;
             AssemblyName = assemblyName;
             DocumentationUrl = documentationUrl;
+            DownloadUrl = downloadUrl;
         }
 
         /// <summary>
