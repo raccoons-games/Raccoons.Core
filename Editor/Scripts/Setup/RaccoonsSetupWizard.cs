@@ -132,8 +132,11 @@ namespace Raccoons.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Continue", EditorStyles.miniButton, GUILayout.Width(80), GUILayout.Height(24)))
-                    _page = PageSetup;
+                using (new EditorGUI.DisabledScope(!AllChecksPass()))
+                {
+                    if (GUILayout.Button("Continue", EditorStyles.miniButton, GUILayout.Width(80), GUILayout.Height(24)))
+                        _page = PageSetup;
+                }
                 GUILayout.Space(16);
             }
         }
@@ -390,6 +393,8 @@ namespace Raccoons.Editor
         }
 
         // ── Shared helpers ────────────────────────────────────────────────────
+
+        private static bool AllChecksPass() => ProjectContextExistsInResources();
 
         private static bool ProjectContextExistsInResources()
         {
