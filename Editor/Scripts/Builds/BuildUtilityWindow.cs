@@ -443,8 +443,9 @@ public abstract class PlatformBuildTabBase : IPlatformBuildTab
 
 public class AndroidBuildTab : PlatformBuildTabBase
 {
-    private const string AndroidKeystorePassKey = "BuildUtility.Android.KeystorePass";
-    private const string AndroidKeyAliasPassKey = "BuildUtility.Android.KeyAliasPass";
+    private static string ProjectId => $"{PlayerSettings.companyName}.{PlayerSettings.productName}";
+    private static string AndroidKeystorePassKey => $"BuildUtility.{ProjectId}.Android.KeystorePass";
+    private static string AndroidKeyAliasPassKey => $"BuildUtility.{ProjectId}.Android.KeyAliasPass";
 
     private string _version;
     private int _bundleVersion;
