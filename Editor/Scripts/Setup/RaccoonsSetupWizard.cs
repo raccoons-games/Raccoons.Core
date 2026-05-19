@@ -301,7 +301,7 @@ namespace Raccoons.Editor
             var entryGuids = AssetDatabase.FindAssets("ProjectEntryPoint t:Prefab");
             var entryPath = entryGuids
                 .Select(g => AssetDatabase.GUIDToAssetPath(g).Replace("\\", "/"))
-                .FirstOrDefault(p => p.Contains("Raccoons") && p.Contains("Templates"));
+                .FirstOrDefault(p => p.IndexOf("Raccoons", System.StringComparison.OrdinalIgnoreCase) >= 0 && p.Contains("Templates"));
 
             if (entryPath == null)
                 return "ProjectEntryPoint.prefab not found in Raccoons.Core/Templates/.";
@@ -341,7 +341,7 @@ namespace Raccoons.Editor
             var entryGuids = AssetDatabase.FindAssets("SceneEntryPoint t:Prefab");
             var entryPath = entryGuids
                 .Select(g => AssetDatabase.GUIDToAssetPath(g).Replace("\\", "/"))
-                .FirstOrDefault(p => p.Contains("Raccoons") && p.Contains("Templates"));
+                .FirstOrDefault(p => p.IndexOf("Raccoons", System.StringComparison.OrdinalIgnoreCase) >= 0 && p.Contains("Templates"));
 
             if (entryPath == null)
                 return "SceneEntryPoint.prefab not found in Raccoons.Core/Templates/.";
