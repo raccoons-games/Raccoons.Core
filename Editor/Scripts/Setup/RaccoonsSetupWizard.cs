@@ -38,7 +38,7 @@ namespace Raccoons.Editor
             {
                 DisplayName = "UniTask",
                 PackageId   = "com.cysharp.unitask",
-                GitUrl      = "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
+                GitUrl      = "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.11"
             },
             new PackageDef
             {
