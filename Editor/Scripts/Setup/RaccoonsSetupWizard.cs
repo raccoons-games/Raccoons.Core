@@ -43,8 +43,8 @@ namespace Raccoons.Editor
             new PackageDef
             {
                 DisplayName = "Zenject",
-                PackageId   = "com.svermeulen.extenject",
-                GitUrl      = "https://github.com/modesttree/Zenject.git?path=UnityProject/Assets/Plugins/Zenject"
+                PackageId   = "com.mathijsbakker.extenject",
+                GitUrl      = "https://github.com/Mathijs-Bakker/Extenject.git?path=UnityProject/Assets/Plugins/Zenject/Source"
             },
             new PackageDef
             {
