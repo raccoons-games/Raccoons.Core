@@ -266,6 +266,10 @@ namespace Raccoons.Editor
 
         private void DrawDependenciesPage()
         {
+            // Auto-start check when entering this page for the first time
+            if (DepsPhaseState == DepsPhase.Idle && !_hasListed)
+                StartAutoCheck();
+
             DrawHeader("Install Dependencies", "Packages are installed one by one in order.");
             GUILayout.Space(12);
 
@@ -305,20 +309,38 @@ namespace Raccoons.Editor
             {
                 GUILayout.FlexibleSpace();
 
-                if (DepsPhaseState == DepsPhase.Idle)
+                bool settled = AllDepsSettled();
+
+                if (DepsPhaseState == DepsPhase.Done || (settled && _hasListed))
                 {
-                    if (GUILayout.Button("Install All", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
-                        StartInstallation();
+                    if (GUILayout.Button("Continue \u2192", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
+                        _page = PageChecks;
                 }
-                else if (AllDepsSettled())
+                else if (!_hasListed || DepsPhaseState == DepsPhase.Listing)
                 {
+                    using (new EditorGUI.DisabledScope(true))
+                        GUILayout.Button("Checking\u2026", EditorStyles.miniButton, GUILayout.Width(120), GUILayout.Height(24));
+                }
+                else if (settled)
+                {
+                    // All already installed
                     if (GUILayout.Button("Continue \u2192", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
                         _page = PageChecks;
                 }
                 else
                 {
-                    using (new EditorGUI.DisabledScope(true))
-                        GUILayout.Button("Installing\u2026", EditorStyles.miniButton, GUILayout.Width(120), GUILayout.Height(24));
+                    bool isInstalling = DepsPhaseState == DepsPhase.Installing
+                                     || DepsPhaseState == DepsPhase.InstallNewtonsoft;
+                    if (isInstalling)
+                    {
+                        using (new EditorGUI.DisabledScope(true))
+                            GUILayout.Button("Installing\u2026", EditorStyles.miniButton, GUILayout.Width(120), GUILayout.Height(24));
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("Install Missing", _primaryButtonStyle, GUILayout.Width(130), GUILayout.Height(28)))
+                            StartInstallation();
+                    }
                 }
 
                 GUILayout.Space(16);
@@ -449,6 +471,15 @@ namespace Raccoons.Editor
         }
 
         // ── Installation logic ────────────────────────────────────────────────
+
+        private void StartAutoCheck()
+        {
+            DepsPhaseState = DepsPhase.Listing;
+            _progressMessage = "Checking installed packages\u2026";
+            _progress = 0f;
+            _listRequest = Client.List();
+            StartPolling();
+        }
 
         private void StartInstallation()
         {
@@ -601,6 +632,19 @@ namespace Raccoons.Editor
             _progress = 1f;
             _progressMessage = "Done!";
             EditorApplication.update -= OnUpdate;
+            SetDepsAvailableDefine();
+        }
+
+        private static void SetDepsAvailableDefine()
+        {
+            const string define = "RACCOONS_DEPS_AVAILABLE";
+#pragma warning disable CS0618
+            var group = EditorUserBuildSettings.selectedBuildTargetGroup;
+            var current = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
+            var list = new HashSet<string>(current.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+            if (list.Add(define))
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
+#pragma warning restore CS0618
         }
 
         // ── NuGet helpers ─────────────────────────────────────────────────────
