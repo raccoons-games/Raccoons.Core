@@ -2,7 +2,7 @@
   "name": "com.raccoons.core",
   "displayName": "Raccoons Core",
   "version": "0.0.1",
-  "description": "Raccoons core framework.\nRequires:\n- Newtonsoft.Json\n- Zenject",
+  "description": "Raccoons core framework.\nRequires:\n- Zenject",
   "unity": "2021.1",
   "author": "Raccoons Games",
   "repository": {
@@ -16,7 +16,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "com.unity.textmeshpro": "3.0.6"
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
   },
   "bugs": {
     "url": "https://github.com/raccoons-games/Raccoons.Core/issues"

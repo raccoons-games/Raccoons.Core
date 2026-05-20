@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Xml.Linq;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
@@ -20,16 +18,15 @@ namespace Raccoons.Editor
         private const int PageSetup = 3;
 
         private enum StepStatus { Pending, InProgress, Success, Skipped, Error }
-        private enum DepsPhase { Idle, Listing, Installing, InstallNewtonsoft, Done }
+        private enum DepsPhase { Idle, Listing, Installing, Done }
 
         // ── Package definitions ──────────────────────────────────────────────
 
         private class PackageDef
         {
             public string DisplayName;
-            public string PackageId;   // UPM package name; null for NuGet
-            public string GitUrl;      // null for NuGet packages
-            public bool IsNuGet;
+            public string PackageId;
+            public string GitUrl;
         }
 
         private static readonly PackageDef[] Packages =
@@ -45,17 +42,6 @@ namespace Raccoons.Editor
                 DisplayName = "Zenject",
                 PackageId   = "com.mathijsbakker.extenject",
                 GitUrl      = "https://github.com/Mathijs-Bakker/Extenject.git?path=UnityProject/Assets/Plugins/Zenject/Source"
-            },
-            new PackageDef
-            {
-                DisplayName = "NuGet Package Manager",
-                PackageId   = "com.github-glitchenco.nugetforunity",
-                GitUrl      = "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity"
-            },
-            new PackageDef
-            {
-                DisplayName = "Newtonsoft.Json",
-                IsNuGet     = true
             },
         };
 
@@ -128,26 +114,6 @@ namespace Raccoons.Editor
             w.ShowUtility();
         }
 
-        internal static void OpenAtDependencies()
-        {
-            var existing = Resources.FindObjectsOfTypeAll<RaccoonsSetupWizard>().FirstOrDefault();
-            if (existing != null)
-            {
-                existing._page = PageDependencies;
-                existing.DepsPhaseState = DepsPhase.InstallNewtonsoft;
-                existing.StartPolling();
-                existing.Repaint();
-                return;
-            }
-
-            var w = CreateInstance<RaccoonsSetupWizard>();
-            w.titleContent = new GUIContent("Raccoons Core Setup");
-            ApplyWindowSize(w);
-            w._page = PageDependencies;
-            w._depsPhaseInt = (int)DepsPhase.InstallNewtonsoft;
-            w.ShowUtility();
-        }
-
         private static void ApplyWindowSize(EditorWindow w)
         {
             w.minSize = new Vector2(560, 420);
@@ -192,18 +158,10 @@ namespace Raccoons.Editor
         {
             var phase = DepsPhaseState;
 
-            // If we were installing a UPM package, re-list to see if it succeeded
             if (phase == DepsPhase.Installing && _currentPkg >= 0 && _currentPkg < Packages.Length)
             {
                 DepsPhaseState = DepsPhase.Listing;
                 _listRequest = Client.List();
-                StartPolling();
-                return;
-            }
-
-            // If we were waiting to install Newtonsoft via NuGet
-            if (phase == DepsPhase.InstallNewtonsoft)
-            {
                 StartPolling();
                 return;
             }
@@ -243,7 +201,7 @@ namespace Raccoons.Editor
             {
                 GUILayout.Space(24);
                 EditorGUILayout.LabelField(
-                    "This wizard will install required dependencies (UniTask, Zenject, NuGet, Newtonsoft.Json) and configure your project entry points.",
+                    "This wizard will install required dependencies (UniTask, Zenject) and configure your project entry points.",
                     _bodyLabelStyle);
                 GUILayout.Space(24);
             }
@@ -266,7 +224,6 @@ namespace Raccoons.Editor
 
         private void DrawDependenciesPage()
         {
-            // Auto-start check when entering this page for the first time
             if (DepsPhaseState == DepsPhase.Idle && !_hasListed)
                 StartAutoCheck();
 
@@ -323,15 +280,12 @@ namespace Raccoons.Editor
                 }
                 else if (settled)
                 {
-                    // All already installed
                     if (GUILayout.Button("Continue \u2192", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
                         _page = PageChecks;
                 }
                 else
                 {
-                    bool isInstalling = DepsPhaseState == DepsPhase.Installing
-                                     || DepsPhaseState == DepsPhase.InstallNewtonsoft;
-                    if (isInstalling)
+                    if (DepsPhaseState == DepsPhase.Installing)
                     {
                         using (new EditorGUI.DisabledScope(true))
                             GUILayout.Button("Installing\u2026", EditorStyles.miniButton, GUILayout.Width(120), GUILayout.Height(24));
@@ -495,9 +449,8 @@ namespace Raccoons.Editor
         {
             switch (DepsPhaseState)
             {
-                case DepsPhase.Listing:           UpdateListing();           break;
-                case DepsPhase.Installing:        UpdateInstalling();        break;
-                case DepsPhase.InstallNewtonsoft: UpdateInstallNewtonsoft(); break;
+                case DepsPhase.Listing:    UpdateListing();    break;
+                case DepsPhase.Installing: UpdateInstalling(); break;
             }
             Repaint();
         }
@@ -513,32 +466,26 @@ namespace Raccoons.Editor
 
             if (!_hasListed)
             {
-                // First listing: set status from scratch
                 _hasListed = true;
                 for (int i = 0; i < Packages.Length; i++)
                 {
-                    bool isInstalled = Packages[i].IsNuGet
-                        ? IsNewtonsoftInstalled()
-                        : installed.Contains(Packages[i].PackageId);
+                    bool isInstalled = installed.Contains(Packages[i].PackageId);
                     _depsStatusInt[i] = isInstalled ? (int)StepStatus.Skipped : (int)StepStatus.Pending;
                 }
             }
             else
             {
-                // Recovery listing after domain reload: update packages that were InProgress or Pending
                 for (int i = 0; i < Packages.Length; i++)
                 {
                     var status = (StepStatus)_depsStatusInt[i];
                     if (status != StepStatus.InProgress && status != StepStatus.Pending) continue;
 
-                    bool isInstalled = Packages[i].IsNuGet
-                        ? IsNewtonsoftInstalled()
-                        : installed.Contains(Packages[i].PackageId);
+                    bool isInstalled = installed.Contains(Packages[i].PackageId);
 
                     if (isInstalled)
                         _depsStatusInt[i] = (int)StepStatus.Success;
                     else if (status == StepStatus.InProgress)
-                        _depsStatusInt[i] = (int)StepStatus.Pending; // reset for retry
+                        _depsStatusInt[i] = (int)StepStatus.Pending;
                 }
             }
 
@@ -566,32 +513,10 @@ namespace Raccoons.Editor
             AdvanceToNextPackage();
         }
 
-        private void UpdateInstallNewtonsoft()
-        {
-            if (IsNewtonsoftInstalled())
-            {
-                int idx = Array.FindIndex(Packages, p => p.IsNuGet);
-                if (idx >= 0) _depsStatusInt[idx] = (int)StepStatus.Success;
-                EditorPrefs.DeleteKey(RaccoonsSetupLauncher.PendingNewtonsoftKey);
-                FinishInstallation();
-                return;
-            }
-
-            if (TryInstallNewtonsoftViaNuGet())
-            {
-                int idx = Array.FindIndex(Packages, p => p.IsNuGet);
-                if (idx >= 0) _depsStatusInt[idx] = (int)StepStatus.Success;
-                EditorPrefs.DeleteKey(RaccoonsSetupLauncher.PendingNewtonsoftKey);
-                FinishInstallation();
-            }
-            // else: keep polling - waiting for NuGet PM to initialize after its domain reload
-        }
-
         private void AdvanceToNextPackage()
         {
             _currentPkg++;
 
-            // Skip already settled packages
             while (_currentPkg < Packages.Length && IsSettled(_depsStatusInt[_currentPkg]))
                 _currentPkg++;
 
@@ -606,18 +531,7 @@ namespace Raccoons.Editor
             _depsStatusInt[_currentPkg] = (int)StepStatus.InProgress;
             _progressMessage = $"Installing {Packages[_currentPkg].DisplayName}\u2026";
 
-            if (Packages[_currentPkg].IsNuGet)
-            {
-                // Write packages.config so NuGet PM processes it on next reload
-                EnsureNewtonsoftInPackagesConfig();
-                EditorPrefs.SetBool(RaccoonsSetupLauncher.PendingNewtonsoftKey, true);
-                DepsPhaseState = DepsPhase.InstallNewtonsoft;
-            }
-            else
-            {
-                DepsPhaseState = DepsPhase.Installing;
-                _addRequest = Client.Add(Packages[_currentPkg].GitUrl);
-            }
+            _addRequest = Client.Add(Packages[_currentPkg].GitUrl);
         }
 
         private static bool IsSettled(int statusInt)
@@ -645,107 +559,6 @@ namespace Raccoons.Editor
             if (list.Add(define))
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
 #pragma warning restore CS0618
-        }
-
-        // ── NuGet helpers ─────────────────────────────────────────────────────
-
-        private static bool TryInstallNewtonsoftViaNuGet()
-        {
-            if (IsNewtonsoftInstalled()) return true;
-
-            Type helperType = null;
-            Type identifierType = null;
-
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                try
-                {
-                    foreach (var t in asm.GetTypes())
-                    {
-                        if (t.Name == "NugetHelper" && helperType == null) helperType = t;
-                        if (t.Name == "NugetPackageIdentifier" && identifierType == null) identifierType = t;
-                    }
-                }
-                catch { }
-
-                if (helperType != null && identifierType != null) break;
-            }
-
-            if (helperType == null || identifierType == null) return false;
-
-            try
-            {
-                object identifier = Activator.CreateInstance(identifierType, "Newtonsoft.Json", "13.0.3");
-
-                var method = helperType.GetMethod("InstallPackage",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null, new[] { identifierType, typeof(bool) }, null);
-
-                if (method != null)
-                {
-                    method.Invoke(null, new[] { identifier, (object)false });
-                    return true;
-                }
-
-                method = helperType.GetMethod("InstallPackage",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null, new[] { identifierType }, null);
-
-                if (method != null)
-                {
-                    method.Invoke(null, new[] { identifier });
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"[Raccoons Setup] NuGet install attempt failed: {ex.Message}");
-            }
-
-            return false;
-        }
-
-        private static void EnsureNewtonsoftInPackagesConfig()
-        {
-            string projectPath = Path.GetDirectoryName(Application.dataPath);
-            string configPath = Path.Combine(projectPath, "packages.config");
-
-            XDocument doc;
-            if (File.Exists(configPath))
-            {
-                try { doc = XDocument.Load(configPath); }
-                catch { doc = new XDocument(new XElement("packages")); }
-            }
-            else
-            {
-                doc = new XDocument(new XElement("packages"));
-            }
-
-            var root = doc.Root;
-            bool exists = root.Elements("package")
-                .Any(e => string.Equals(e.Attribute("id")?.Value, "Newtonsoft.Json", StringComparison.OrdinalIgnoreCase));
-
-            if (!exists)
-            {
-                root.Add(new XElement("package",
-                    new XAttribute("id", "Newtonsoft.Json"),
-                    new XAttribute("version", "13.0.3"),
-                    new XAttribute("manuallyInstalled", "true")));
-                doc.Save(configPath);
-            }
-        }
-
-        private static bool IsNewtonsoftInstalled()
-        {
-            // Check NuGetForUnity packages folder
-            if (Directory.Exists("Assets/Packages") &&
-                Directory.GetDirectories("Assets/Packages", "Newtonsoft.Json*").Length > 0)
-                return true;
-
-            // Check packages.config (written but not yet installed — don't treat as installed)
-            // Check if Newtonsoft assembly is loaded (via NuGet or UPM)
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .Any(a => a.GetName().Name.IndexOf("Newtonsoft", StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         // ── Setup logic ───────────────────────────────────────────────────────
