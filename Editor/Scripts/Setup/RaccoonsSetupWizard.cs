@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
@@ -13,61 +11,19 @@ namespace Raccoons.Editor
     public class RaccoonsSetupWizard : EditorWindow
     {
         private const int PageWelcome = 0;
-        private const int PageDependencies = 1;
-        private const int PageChecks = 2;
-        private const int PageSetup = 3;
+        private const int PageChecks = 1;
+        private const int PageSetup = 2;
 
         private enum StepStatus { Pending, InProgress, Success, Skipped, Error }
-        private enum DepsPhase { Idle, Listing, Installing, Done }
-
-        // ── Package definitions ──────────────────────────────────────────────
-
-        private class PackageDef
-        {
-            public string DisplayName;
-            public string PackageId;
-            public string GitUrl;
-        }
-
-        private static readonly PackageDef[] Packages =
-        {
-            new PackageDef
-            {
-                DisplayName = "UniTask",
-                PackageId   = "com.cysharp.unitask",
-                GitUrl      = "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.11"
-            },
-            new PackageDef
-            {
-                DisplayName = "Zenject",
-                PackageId   = "com.mathijsbakker.extenject",
-                GitUrl      = "https://github.com/Mathijs-Bakker/Extenject.git?path=UnityProject/Assets/Plugins/Zenject/Source"
-            },
-        };
 
         // ── Serialized state (survives domain reload) ────────────────────────
 
         [SerializeField] private int _page = PageWelcome;
-        [SerializeField] private int _depsPhaseInt = (int)DepsPhase.Idle;
-        [SerializeField] private int[] _depsStatusInt;
-        [SerializeField] private string[] _depsErrors;
-        [SerializeField] private int _currentPkg = -1;
-        [SerializeField] private float _progress;
-        [SerializeField] private string _progressMessage = "";
-        [SerializeField] private bool _hasListed;
         [SerializeField] private bool _setupStarted;
         [SerializeField] private int _addEntryStatusInt = (int)StepStatus.Pending;
         [SerializeField] private string _addEntryError;
         [SerializeField] private int _addSceneStatusInt = (int)StepStatus.Pending;
         [SerializeField] private string _addSceneError;
-
-        // ── Non-serialized runtime state ─────────────────────────────────────
-
-        private DepsPhase DepsPhaseState
-        {
-            get => (DepsPhase)_depsPhaseInt;
-            set => _depsPhaseInt = (int)value;
-        }
 
         private StepStatus AddEntryStatus
         {
@@ -80,9 +36,6 @@ namespace Raccoons.Editor
             get => (StepStatus)_addSceneStatusInt;
             set => _addSceneStatusInt = (int)value;
         }
-
-        private ListRequest _listRequest;
-        private AddRequest _addRequest;
 
         // ── Styles ───────────────────────────────────────────────────────────
 
@@ -127,55 +80,6 @@ namespace Raccoons.Editor
             return new Rect(main.x + (main.width - w) / 2f, main.y + (main.height - h) / 2f, w, h);
         }
 
-        // ── Lifecycle ─────────────────────────────────────────────────────────
-
-        private void OnEnable()
-        {
-            EnsureStatusArrays();
-            RecoverFromDomainReload();
-        }
-
-        private void OnDisable()
-        {
-            EditorApplication.update -= OnUpdate;
-        }
-
-        private void EnsureStatusArrays()
-        {
-            if (_depsStatusInt == null || _depsStatusInt.Length != Packages.Length)
-            {
-                _depsStatusInt = new int[Packages.Length];
-                _depsErrors = new string[Packages.Length];
-                for (int i = 0; i < _depsStatusInt.Length; i++)
-                    _depsStatusInt[i] = (int)StepStatus.Pending;
-            }
-
-            if (_depsErrors == null || _depsErrors.Length != Packages.Length)
-                _depsErrors = new string[Packages.Length];
-        }
-
-        private void RecoverFromDomainReload()
-        {
-            var phase = DepsPhaseState;
-
-            if (phase == DepsPhase.Installing && _currentPkg >= 0 && _currentPkg < Packages.Length)
-            {
-                DepsPhaseState = DepsPhase.Listing;
-                _listRequest = Client.List();
-                StartPolling();
-                return;
-            }
-
-            if (phase != DepsPhase.Idle && phase != DepsPhase.Done)
-                StartPolling();
-        }
-
-        private void StartPolling()
-        {
-            EditorApplication.update -= OnUpdate;
-            EditorApplication.update += OnUpdate;
-        }
-
         // ── OnGUI ─────────────────────────────────────────────────────────────
 
         private void OnGUI()
@@ -183,10 +87,9 @@ namespace Raccoons.Editor
             EnsureStyles();
             switch (_page)
             {
-                case PageWelcome:      DrawWelcomePage();      break;
-                case PageDependencies: DrawDependenciesPage(); break;
-                case PageChecks:       DrawChecksPage();       break;
-                case PageSetup:        DrawSetupPage();        break;
+                case PageWelcome: DrawWelcomePage(); break;
+                case PageChecks:  DrawChecksPage();  break;
+                case PageSetup:   DrawSetupPage();   break;
             }
         }
 
@@ -201,7 +104,7 @@ namespace Raccoons.Editor
             {
                 GUILayout.Space(24);
                 EditorGUILayout.LabelField(
-                    "This wizard will install required dependencies (UniTask, Zenject) and configure your project entry points.",
+                    "All required dependencies are installed automatically via the Unity Package Manager. This wizard will configure your project entry points.",
                     _bodyLabelStyle);
                 GUILayout.Space(24);
             }
@@ -214,102 +117,10 @@ namespace Raccoons.Editor
             {
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Begin Setup", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
-                    _page = PageDependencies;
+                    _page = PageChecks;
                 GUILayout.Space(16);
             }
             GUILayout.Space(8);
-        }
-
-        // ── Dependencies page ─────────────────────────────────────────────────
-
-        private void DrawDependenciesPage()
-        {
-            if (DepsPhaseState == DepsPhase.Idle && !_hasListed)
-                StartAutoCheck();
-
-            DrawHeader("Install Dependencies", "Packages are installed one by one in order.");
-            GUILayout.Space(12);
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                GUILayout.Space(24);
-                using (new EditorGUILayout.VerticalScope())
-                {
-                    for (int i = 0; i < Packages.Length; i++)
-                    {
-                        DrawStepRow(Packages[i].DisplayName, (StepStatus)_depsStatusInt[i], _depsErrors[i]);
-                        GUILayout.Space(4);
-                    }
-                }
-                GUILayout.Space(24);
-            }
-
-            GUILayout.Space(12);
-
-            if (DepsPhaseState != DepsPhase.Idle)
-            {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    GUILayout.Space(24);
-                    var r = GUILayoutUtility.GetRect(0, 22, GUILayout.ExpandWidth(true));
-                    EditorGUI.ProgressBar(r, _progress, _progressMessage);
-                    GUILayout.Space(24);
-                }
-                GUILayout.Space(8);
-            }
-
-            GUILayout.FlexibleSpace();
-            DrawSeparator();
-            GUILayout.Space(8);
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                GUILayout.FlexibleSpace();
-
-                bool settled = AllDepsSettled();
-
-                if (DepsPhaseState == DepsPhase.Done || (settled && _hasListed))
-                {
-                    if (GUILayout.Button("Continue \u2192", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
-                        _page = PageChecks;
-                }
-                else if (!_hasListed || DepsPhaseState == DepsPhase.Listing)
-                {
-                    using (new EditorGUI.DisabledScope(true))
-                        GUILayout.Button("Checking\u2026", EditorStyles.miniButton, GUILayout.Width(120), GUILayout.Height(24));
-                }
-                else if (settled)
-                {
-                    if (GUILayout.Button("Continue \u2192", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
-                        _page = PageChecks;
-                }
-                else
-                {
-                    if (DepsPhaseState == DepsPhase.Installing)
-                    {
-                        using (new EditorGUI.DisabledScope(true))
-                            GUILayout.Button("Installing\u2026", EditorStyles.miniButton, GUILayout.Width(120), GUILayout.Height(24));
-                    }
-                    else
-                    {
-                        if (GUILayout.Button("Install Missing", _primaryButtonStyle, GUILayout.Width(130), GUILayout.Height(28)))
-                            StartInstallation();
-                    }
-                }
-
-                GUILayout.Space(16);
-            }
-            GUILayout.Space(8);
-        }
-
-        private bool AllDepsSettled()
-        {
-            if (_depsStatusInt == null) return false;
-            return _depsStatusInt.All(s =>
-            {
-                var status = (StepStatus)s;
-                return status == StepStatus.Success || status == StepStatus.Skipped || status == StepStatus.Error;
-            });
         }
 
         // ── Checks page ───────────────────────────────────────────────────────
@@ -422,143 +233,6 @@ namespace Raccoons.Editor
                 GUILayout.Space(16);
             }
             GUILayout.Space(8);
-        }
-
-        // ── Installation logic ────────────────────────────────────────────────
-
-        private void StartAutoCheck()
-        {
-            DepsPhaseState = DepsPhase.Listing;
-            _progressMessage = "Checking installed packages\u2026";
-            _progress = 0f;
-            _listRequest = Client.List();
-            StartPolling();
-        }
-
-        private void StartInstallation()
-        {
-            _hasListed = false;
-            DepsPhaseState = DepsPhase.Listing;
-            _progressMessage = "Checking installed packages\u2026";
-            _progress = 0f;
-            _listRequest = Client.List();
-            StartPolling();
-        }
-
-        private void OnUpdate()
-        {
-            switch (DepsPhaseState)
-            {
-                case DepsPhase.Listing:    UpdateListing();    break;
-                case DepsPhase.Installing: UpdateInstalling(); break;
-            }
-            Repaint();
-        }
-
-        private void UpdateListing()
-        {
-            if (_listRequest == null || !_listRequest.IsCompleted) return;
-
-            var installed = new HashSet<string>();
-            if (_listRequest.Status == StatusCode.Success)
-                foreach (var p in _listRequest.Result)
-                    installed.Add(p.name);
-
-            if (!_hasListed)
-            {
-                _hasListed = true;
-                for (int i = 0; i < Packages.Length; i++)
-                {
-                    bool isInstalled = installed.Contains(Packages[i].PackageId);
-                    _depsStatusInt[i] = isInstalled ? (int)StepStatus.Skipped : (int)StepStatus.Pending;
-                }
-            }
-            else
-            {
-                for (int i = 0; i < Packages.Length; i++)
-                {
-                    var status = (StepStatus)_depsStatusInt[i];
-                    if (status != StepStatus.InProgress && status != StepStatus.Pending) continue;
-
-                    bool isInstalled = installed.Contains(Packages[i].PackageId);
-
-                    if (isInstalled)
-                        _depsStatusInt[i] = (int)StepStatus.Success;
-                    else if (status == StepStatus.InProgress)
-                        _depsStatusInt[i] = (int)StepStatus.Pending;
-                }
-            }
-
-            _listRequest = null;
-            DepsPhaseState = DepsPhase.Installing;
-            _currentPkg = -1;
-            AdvanceToNextPackage();
-        }
-
-        private void UpdateInstalling()
-        {
-            if (_addRequest == null || !_addRequest.IsCompleted) return;
-
-            if (_addRequest.Status == StatusCode.Success)
-            {
-                _depsStatusInt[_currentPkg] = (int)StepStatus.Success;
-            }
-            else
-            {
-                _depsStatusInt[_currentPkg] = (int)StepStatus.Error;
-                _depsErrors[_currentPkg] = _addRequest.Error?.message ?? "Unknown error";
-            }
-
-            _addRequest = null;
-            AdvanceToNextPackage();
-        }
-
-        private void AdvanceToNextPackage()
-        {
-            _currentPkg++;
-
-            while (_currentPkg < Packages.Length && IsSettled(_depsStatusInt[_currentPkg]))
-                _currentPkg++;
-
-            if (_currentPkg >= Packages.Length)
-            {
-                FinishInstallation();
-                return;
-            }
-
-            float total = Packages.Length;
-            _progress = _currentPkg / total;
-            _depsStatusInt[_currentPkg] = (int)StepStatus.InProgress;
-            _progressMessage = $"Installing {Packages[_currentPkg].DisplayName}\u2026";
-
-            _addRequest = Client.Add(Packages[_currentPkg].GitUrl);
-        }
-
-        private static bool IsSettled(int statusInt)
-        {
-            var s = (StepStatus)statusInt;
-            return s == StepStatus.Success || s == StepStatus.Skipped || s == StepStatus.Error;
-        }
-
-        private void FinishInstallation()
-        {
-            DepsPhaseState = DepsPhase.Done;
-            _progress = 1f;
-            _progressMessage = "Done!";
-            EditorApplication.update -= OnUpdate;
-            SetDepsAvailableDefine();
-        }
-
-        private static void SetDepsAvailableDefine()
-        {
-            const string define = "RACCOONS_DEPS_AVAILABLE";
-#pragma warning disable CS0618
-            var group = EditorUserBuildSettings.selectedBuildTargetGroup;
-            var current = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
-            var list = new HashSet<string>(current.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
-            if (list.Add(define))
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
-#pragma warning restore CS0618
         }
 
         // ── Setup logic ───────────────────────────────────────────────────────
