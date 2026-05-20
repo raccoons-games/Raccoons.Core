@@ -2,7 +2,7 @@
   "name": "com.raccoons.core",
   "displayName": "Raccoons Core",
   "version": "0.0.1",
-  "description": "Raccoons core framework.\nRequires:\n- Zenject",
+  "description": "Raccoons core framework.",
   "unity": "2021.1",
   "author": "Raccoons Games",
   "repository": {
