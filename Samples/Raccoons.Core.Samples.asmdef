@@ -4,7 +4,8 @@
     "references": [
         "Raccoons.Core",
         "Zenject",
-        "Newtonsoft.Json"
+        "Newtonsoft.Json",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

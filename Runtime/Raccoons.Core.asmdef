@@ -3,7 +3,8 @@
     "rootNamespace": "Raccoons",
     "references": [
         "Zenject",
-        "Newtonsoft.Json"
+        "Newtonsoft.Json",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
