@@ -21,6 +21,16 @@ namespace Raccoons.Editor
                 documentationUrl: "https://stompyrobot.uk/tools/srdebugger/documentation/",
                 downloadUrl: "https://www.notion.so/SRDebugger-32ddd2ff91dd8051b586ee37ed05ab4e?v=22ddd2ff91dd80279e4e000cc64bec02&source=copy_link"
             ),
+            new IntegrationDefinition(
+                name: "Firebase Analytics",
+                symbol: "RACCOONS_FIREBASE_ANALYTICS",
+                category: "Analytics",
+                description: "Enables FirebaseAnalyticsService for RaccoonsAnalytics. Requires the Firebase Analytics Unity SDK to be installed in the project.",
+                packageId: "com.google.firebase.analytics",
+                detectionType: "Firebase.Analytics.FirebaseAnalytics",
+                assemblyName: "Firebase.Analytics",
+                documentationUrl: "https://firebase.google.com/docs/analytics/unity/start"
+            ),
         };
 
         private static readonly string[] TabNames = { "All", "Enabled", "Detected" };
