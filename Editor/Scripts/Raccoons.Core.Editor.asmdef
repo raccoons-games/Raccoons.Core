@@ -15,6 +15,17 @@
     "defineConstraints": [
         "RACCOONS_DEPS_AVAILABLE"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.mathijsbakker.extenject",
+            "expression": "",
+            "define": "RACCOONS_DEPS_AVAILABLE"
+        },
+        {
+            "name": "com.modesttree.zenject",
+            "expression": "",
+            "define": "RACCOONS_DEPS_AVAILABLE"
+        }
+    ],
     "noEngineReferences": false
 }
