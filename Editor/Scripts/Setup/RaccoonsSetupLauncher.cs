@@ -13,7 +13,17 @@ namespace Raccoons.Editor
         {
             if (EditorPrefs.GetBool(CompletedKey, false)) return;
 
-            EditorApplication.delayCall += OpenWizardOnce;
+            if (RaccoonsDependencyInstaller.InstallationComplete)
+                EditorApplication.delayCall += OpenWizardOnce;
+            else
+                RaccoonsDependencyInstaller.OnInstallationComplete += OnDepsReady;
+        }
+
+        private static void OnDepsReady()
+        {
+            RaccoonsDependencyInstaller.OnInstallationComplete -= OnDepsReady;
+            if (!EditorPrefs.GetBool(CompletedKey, false))
+                EditorApplication.delayCall += OpenWizardOnce;
         }
 
         private static void OpenWizardOnce()
