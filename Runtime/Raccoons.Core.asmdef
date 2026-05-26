@@ -2,8 +2,9 @@
     "name": "Raccoons.Core",
     "rootNamespace": "Raccoons",
     "references": [
-        "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4"
+        "Zenject",
+        "Newtonsoft.Json",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -11,7 +12,9 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "RACCOONS_DEPS_AVAILABLE"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }
