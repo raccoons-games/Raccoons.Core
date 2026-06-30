@@ -29,6 +29,11 @@
             "name": "com.modesttree.zenject",
             "expression": "",
             "define": "RACCOONS_DEPS_AVAILABLE"
+        },
+        {
+            "name": "com.svermeulen.extenject",
+            "expression": "",
+            "define": "RACCOONS_DEPS_AVAILABLE"
         }
     ],
     "noEngineReferences": false
