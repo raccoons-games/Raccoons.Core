@@ -80,6 +80,14 @@ namespace Raccoons.Editor
             return new Rect(main.x + (main.width - w) / 2f, main.y + (main.height - h) / 2f, w, h);
         }
 
+        // Closing the wizard without finishing it counts as "not now": it will not open
+        // by itself again for this project (Raccoons/Setup Wizard still opens it).
+        private void OnDestroy()
+        {
+            if (!RaccoonsSetupLauncher.IsSetupCompleted)
+                RaccoonsSetupLauncher.MarkSetupDismissed();
+        }
+
         // ── OnGUI ─────────────────────────────────────────────────────────────
 
         private void OnGUI()
@@ -115,6 +123,12 @@ namespace Raccoons.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
+                GUILayout.Space(16);
+                if (GUILayout.Button("Skip", EditorStyles.miniButton, GUILayout.Width(80), GUILayout.Height(24)))
+                {
+                    RaccoonsSetupLauncher.MarkSetupDismissed();
+                    Close();
+                }
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Begin Setup", _primaryButtonStyle, GUILayout.Width(120), GUILayout.Height(28)))
                     _page = PageChecks;
