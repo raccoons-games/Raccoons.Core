@@ -1,0 +1,41 @@
+{
+    "name": "Raccoons.Core.AppLovinMax",
+    "rootNamespace": "Raccoons.Analytics.AppLovinMax",
+    "references": [
+        "Raccoons.Core",
+        "MaxSdk.Scripts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "RACCOONS_DEPS_AVAILABLE",
+        "RACCOONS_MAX_AVAILABLE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.mathijsbakker.extenject",
+            "expression": "",
+            "define": "RACCOONS_DEPS_AVAILABLE"
+        },
+        {
+            "name": "com.modesttree.zenject",
+            "expression": "",
+            "define": "RACCOONS_DEPS_AVAILABLE"
+        },
+        {
+            "name": "com.svermeulen.extenject",
+            "expression": "",
+            "define": "RACCOONS_DEPS_AVAILABLE"
+        },
+        {
+            "name": "com.applovin.mediation.ads",
+            "expression": "",
+            "define": "RACCOONS_MAX_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}
