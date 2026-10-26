@@ -32,8 +32,9 @@ disagree, the contract wins — tell the human.
    event names at ~500.
 3. **Never call `RaccoonsAnalytics.InterstitialRevenuePaid / RewardVideoRevenuePaid / BannerRevenuePaid`.**
    Revenue lives only on `ad_impression.value`; the revenue_paid events double-count it.
-4. **`ad_format` = MAX format code as-is, uppercase** (`BANNER`, `LEADER`, `MREC`, `INTER`, `REWARDED`).
-   Never map or lowercase it.
+4. **`ad_format`:** with AppLovin MAX pass `AdInfo.AdFormat` as-is (uppercase `BANNER`, `LEADER`, `MREC`, `INTER`,
+   `REWARDED`; `MaxAnalyticsBridge` does it). With any other mediation pass exactly one of `INTER`, `REWARDED`,
+   `BANNER`, `LEADER`, `MREC` (the SDK maps only `INTERSTITIAL` and `REWARDED_VIDEO`). Never lowercase.
 5. **Do not touch AppsFlyer events** (they drive UA postbacks and campaign optimisation). Only Firebase/GA4
    events are in scope. If an AppsFlyer event looks redundant, list it in the report; do not remove it.
    In Arrow Cube one game method fans out to Firebase, AppsFlyer, GameAnalytics and Raccoons at once — so when
@@ -90,6 +91,10 @@ currency, list of rewarded & interstitial placements, GCP project id and BigQuer
    is merged into main, ask the human for the current tag/commit and use that instead. Verify after resolve:
    `Library/PackageCache/com.raccoons.core*/package.json` → version ≥ 0.1.0, and
    `Runtime/Analytics/RaccoonsAnalytics.AdRevenue.cs` exists.
+   **Upgrading a live game from 0.0.x: only with the human's explicit go-ahead (live-ops checks it first).** 0.1.0
+   makes `Initialize` set `build_version = Application.version` if the game never set it — from the release day the
+   dashboard's invalid-traffic filter applies to that game's level funnel (record the date) — and creates a hidden
+   `[RaccoonsAnalytics]` GameObject (`DontDestroyOnLoad`). See `CHANGELOG.md` in the package.
    If an embedded copy exists in `Packages/com.raccoons.core/`, do not delete it silently — report it to the human
    (it overrides the manifest URL; its `Custom` has the same signature as 0.1.0, so switching is code-compatible).
 3. Firebase Unity SDK: Analytics (required), Crashlytics (strongly recommended — crash lines in the dashboard).
@@ -135,9 +140,12 @@ currency, list of rewarded & interstitial placements, GCP project id and BigQuer
 
 ## 3. Initialise
 
-If nothing else in the game initialises Firebase, the SDK's `FirebaseAnalyticsInitializer` component (boot scene)
-is enough: since 0.1.0 it always releases held events and wraps Firebase in `FilteredAnalyticsService`. If Remote
-Config / Crashlytics also wait for Firebase, initialise in the game's boot flow instead, in this order:
+Use **exactly one** way to initialise: the SDK's `FirebaseAnalyticsInitializer` component in the boot scene **or**
+your own `Initialize` call — never both (a second `Initialize` sends an extra `game_started` and replaces the
+services). The component fits when nothing else in the game initialises Firebase; since 0.1.0 it always releases
+held events. In a new game tick its *Filter Noisy Events* on purpose — it is off by default so components already
+placed in live games keep sending what they sent. If Remote Config / Crashlytics also wait for Firebase,
+initialise in the game's boot flow instead, in this order:
 
 ```csharp
 using Raccoons.Analytics;
@@ -314,7 +322,7 @@ players do 4+). If the total exceeds the budget:
 | defines on both platforms | inspect `scriptingDefineSymbols` in `ProjectSettings.asset` | `RACCOONS_FIREBASE_ANALYTICS` (+ `RACCOONS_DEPS_AVAILABLE` if needed) for Android **and** iOS |
 | SDK pinned | `Packages/manifest.json` | `#<commit>` present |
 | screen reporting off | AndroidManifest meta-data + iOS PostProcessBuild present | both |
-| no `FirebaseAnalyticsInitializer` in scenes | GUID grep from step 1.7 | 0 hits |
+| exactly one way to initialise | GUID grep from step 1.7 + `grep -rn "RaccoonsAnalytics.Initialize" Assets` | either the component in a scene or the game's own `Initialize`, never both (double `Initialize` = extra `game_started` + replaced services) |
 | no events in loops | review each call site: not in `Update/LateUpdate/FixedUpdate`, not per frame/tap | none |
 | Firebase limits | event names ≤ 40 chars snake_case; ≤ 25 params per event; string values ≤ 100 chars | all |
 | one revenue path | revenue grep below: either `MaxAnalyticsBridge.Attach` or the game's own `ad_impression` / `AdImpression` calls, not both | yes |
@@ -346,7 +354,8 @@ Expect: `mission_started/completed/failed` with int `mission_id` and growing `mi
 one `initial_ecpm`; `reward_video_show` + `reward_video_collect`; `power_up_used`; `coins_delta`;
 `open_tutorial_step_*`. Must **not** appear: `*_load`, `*_load_fail`, `*_revenue_paid`, `screen_view`.
 
-The Raccoons "SENT" log fires **before** delivery (and even for events the guard drops) — it proves nothing.
+The Raccoons "SENT" log (`OnLogEvent`) fires **before** delivery (and even for events `FilteredAnalyticsService`
+drops) — it proves nothing.
 
 ### 7.3 BigQuery, on the first full day after release
 

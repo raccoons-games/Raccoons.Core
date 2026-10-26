@@ -53,7 +53,9 @@ RaccoonsAnalytics.Initialize(new FilteredAnalyticsService(new FirebaseAnalyticsS
 RaccoonsAnalytics.Initialize(new FirebaseAnalyticsService(), new DebugLogAnalyticsService());
 ```
 
-Or drop a `FirebaseAnalyticsInitializer` into the boot scene (see *Firebase integration*).
+Or drop a `FirebaseAnalyticsInitializer` into the boot scene and tick *Filter Noisy Events* (see *Firebase
+integration*) — one or the other, never both: a second `Initialize` sends an extra `game_started` and
+replaces the services.
 
 ### 2. Ad revenue (AppLovin MAX)
 
@@ -164,8 +166,8 @@ A ready-made back-end ships in `Runtime/Analytics/Firebase/`.
    **`FirebaseAnalyticsInitializer`** component into your boot scene. The initializer:
    - calls `HoldEvents()` in `Awake` so nothing is lost during async init;
    - runs `FirebaseApp.CheckAndFixDependenciesAsync()`;
-   - on success, `Initialize(new FilteredAnalyticsService(new FirebaseAnalyticsService()))`
-     (untick *Filter Noisy Events* to send everything);
+   - on success, `Initialize(new FirebaseAnalyticsService())`, wrapped in `FilteredAnalyticsService`
+     only if *Filter Noisy Events* is ticked (off by default — new games tick it on purpose);
    - on failure, logs an error;
    - always `ReleaseEvents()`, so events never pile up in memory.
    If your game resolves Firebase dependencies elsewhere (Remote Config, Crashlytics), do it once
@@ -182,7 +184,7 @@ from any thread.
 
 | Method | Event | Notes |
 |--------|-------|-------|
-| `AdImpression(adFormat, revenue, placement?, adSource?, adUnitName?, adPlatform = "AppLovin")` | `ad_impression` | `value` (USD, negative → 0), `ad_format` uppercase (`BANNER`, `LEADER`, `MREC`, `INTER`, `REWARDED`), `placement`, `currency=USD`. Carries only `debug`, `store`, `build_version`, `user_level` — no balances or cohorts |
+| `AdImpression(adFormat, revenue, placement?, adSource?, adUnitName?, adPlatform = "AppLovin")` | `ad_impression` | `value` (USD, negative → 0), `ad_format`: MAX codes as-is; other mediations pass `INTER`, `REWARDED`, `BANNER`, `LEADER` or `MREC` (`INTERSTITIAL`, `REWARDED_VIDEO` are mapped), `placement`, `currency=USD`. Carries only `debug`, `store`, `build_version`, `user_level` — no balances or cohorts |
 | `AdLoaded(adFormat, revenue, adSource?, adUnitName?, adPlatform)` | `initial_ecpm` | first interstitial of the launch: `value` = revenue × 1000; falls back to the first INTER impression |
 | `FlushAdImpressionBatches()` | `ad_impression` | sends open banner batches; called automatically on pause/quit |
 | `BannerBatchSeconds` (property, default 0) | — | >0 sums BANNER/LEADER impressions into one event with `impressions` / `impressions_with_value`. **Leave at 0** until rg-liveops reads `impressions` |
@@ -219,6 +221,18 @@ backfilled. Arrow Cube hit it with 512 events per user per day; the dashboard re
 diagnostics, ~30% of Arrow Cube's volume) and `*_revenue_paid`. Add more names in the
 constructor or at runtime with `Block(name)` / `Unblock(name)` (e.g. from Remote Config).
 Budget numbers and what not to send: `Documentation~/Analytics/liveops-analytics-setup.md`.
+
+## Upgrading from 0.0.x
+
+A **live game updates the package only together with live-ops** — they check what the change does to
+the game's dashboards and daily reports first. What 0.1.0 changes for an existing game (full list in
+`CHANGELOG.md`):
+
+- `FirebaseAnalyticsInitializer` keeps sending everything: *Filter Noisy Events* is off by default.
+- A game that never called `SetBuildVersion` starts sending `build_version = Application.version` on the
+  release day; from then on the dashboard's invalid-traffic filter applies to its level funnel. Write the
+  date into the game's history.
+- `Initialize` (in Play mode) creates a hidden `[RaccoonsAnalytics]` GameObject with `DontDestroyOnLoad`.
 
 ## Rewards & economy models
 

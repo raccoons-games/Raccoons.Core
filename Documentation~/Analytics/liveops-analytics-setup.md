@@ -75,10 +75,19 @@ UPM-пакетом `com.applovin.mediation.ads`, міст `MaxAnalyticsBridge` �
 так прожив кілька версій, на iOS не відправивши жодної події SDK. З версії 0.1.0 SDK хоча б кричить
 про це в лог помилкою, щойно створюється `FirebaseAnalyticsService` без define.
 
-**`FirebaseAnalyticsInitializer` чи власна ініціалізація.** Компонент із SDK (з 0.1.0 він завжди
-відпускає чергу подій, навіть якщо Firebase не піднявся) годиться, якщо Firebase у грі більше ніхто
-не ініціалізує. Якщо Remote Config чи Crashlytics теж чекають на Firebase — ініціалізуй сам, як
-нижче, щоб `CheckAndFixDependenciesAsync` йшов один раз.
+**`FirebaseAnalyticsInitializer` чи власна ініціалізація — рівно щось одне.** Компонент із SDK (з
+0.1.0 він завжди відпускає чергу подій, навіть якщо Firebase не піднявся) годиться, якщо Firebase у
+грі більше ніхто не ініціалізує. У новій грі на ньому треба **свідомо поставити галку** *Filter Noisy
+Events* — за замовчуванням вона вимкнена, щоб уже покладені в сцени компоненти живих ігор не змінили
+телеметрію самі. Якщо Remote Config чи Crashlytics теж чекають на Firebase — ініціалізуй сам, як
+нижче, щоб `CheckAndFixDependenciesAsync` йшов один раз. Компонент у сцені й власний `Initialize`
+разом — ніколи: другий `Initialize` шле зайвий `game_started` і підміняє сервіси.
+
+**Оновлюєш пакет у живій грі з 0.0.x?** Лише разом із live-ops. Що 0.1.0 змінює в живій грі:
+фільтр у компоненті лишається вимкненим; якщо гра не ставила `build_version`, з дня релізу його
+поставить `Initialize` (`Application.version`) — і з цього дня до її воронки рівнів почне діяти
+фільтр невалідного трафіку, тож запиши дату в історію гри; `Initialize` створює прихований об'єкт
+`[RaccoonsAnalytics]` з `DontDestroyOnLoad`. Повний список — `CHANGELOG.md` у корені пакета.
 
 ---
 
@@ -176,12 +185,19 @@ MaxSdk.ShowInterstitial(interUnitId, "placement_level_complete_continue");
 MaxSdk.ShowRewardedAd(rewardedUnitId, "placement_out_of_moves_revive");
 ```
 
-Інша медіація — виклич сама з її колбека доходу:
-`RaccoonsAnalytics.AdImpression(format, revenueUsd, placement, network, adUnitId, "IronSource")`, а з
-колбека завантаження інтерстішала — `RaccoonsAnalytics.AdLoaded(...)`.
+Інша медіація — виклич сама з її колбека доходу, передавши формат одним із кодів, які читає дашборд:
+`INTER`, `REWARDED`, `BANNER`, `LEADER` або `MREC`. Наприклад, для IronSource:
 
-SDK відправляє `ad_impression` з `value` (дохід у USD, double), `ad_format` (код медіації великими
-літерами: `BANNER` / `LEADER` / `INTER` / `REWARDED`), `placement`, `currency=USD`, а також
+```csharp
+var format = adUnit == "interstitial" ? "INTER" : adUnit == "rewarded_video" ? "REWARDED" : "BANNER";
+RaccoonsAnalytics.AdImpression(format, revenueUsd, placement, network, adUnitId, "IronSource");
+```
+
+а з колбека завантаження інтерстішала — `RaccoonsAnalytics.AdLoaded("INTER", ...)`. Очевидні аліаси
+(`INTERSTITIAL`, `REWARDED_VIDEO`) SDK сам перетворить на `INTER` / `REWARDED`, решту — ні.
+
+SDK відправляє `ad_impression` з `value` (дохід у USD, double), `ad_format` (у MAX — код як є,
+великими літерами: `BANNER` / `LEADER` / `INTER` / `REWARDED`), `placement`, `currency=USD`, а також
 `initial_ecpm` — eCPM першого інтерстішала за запуск, по ньому дашборд ділить гравців на тири.
 Колбеки MAX можуть прийти не з головного потоку — SDK це витримує.
 
@@ -358,7 +374,7 @@ Firebase Console → Analytics → DebugView. Пройди рівень, про�
 | Симптом | Причина | Що робити |
 |---|---|---|
 | На iOS усе порожньо, а в лозі «SENT» | немає `RACCOONS_FIREBASE_ANALYTICS` в iOS-дефайнах | define для обох платформ |
-| Воронка рівнів порожня, решта живе | `build_version` ≠ `app_info.version` або `mission_type` не той (`"Level"`, `"main"`), а live-ops про це не знає | `SetBuildVersion(Application.version)`, `mission_type="level"` |
+| Воронка рівнів порожня, решта живе | `build_version` ≠ `app_info.version` або `mission_type` не той (`"Level"`, `"main"`), а live-ops про це не знає | прибрати власний `SetBuildVersion` або передавати лише `Application.version`; `mission_type="level"` |
 | Частка revive понад 100% | `mission_failed` шлеться лише після відмови від revive | розділ 3, «Поразка і revive» |
 | Дохід удвічі більший за MAX | `*_revenue_paid` поруч з `ad_impression`, або `MaxAnalyticsBridge` поруч із власним логуванням `ad_impression` | одне джерело доходу |
 | Revenue за форматами порожній | `ad_format` у нижньому регістрі або перекладений | код MAX як є |

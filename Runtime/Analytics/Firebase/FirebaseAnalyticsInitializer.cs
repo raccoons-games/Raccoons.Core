@@ -9,8 +9,10 @@ namespace Raccoons.Analytics.Firebase
     public class FirebaseAnalyticsInitializer : MonoBehaviour
     {
 #pragma warning disable 0414 // unused while RACCOONS_FIREBASE_ANALYTICS is off
-        [Tooltip("Wrap Firebase in FilteredAnalyticsService (drops *_load, *_load_fail, *_revenue_paid).")]
-        [SerializeField] private bool _filterNoisyEvents = true;
+        // Opt-in: components already placed in live games' scenes must keep sending what they sent.
+        [Tooltip("Wrap Firebase in FilteredAnalyticsService (drops *_load, *_load_fail, *_revenue_paid). " +
+                 "Turn on for new games; for a live game only together with live-ops.")]
+        [SerializeField] private bool _filterNoisyEvents = false;
 #pragma warning restore 0414
 
         private void Awake()

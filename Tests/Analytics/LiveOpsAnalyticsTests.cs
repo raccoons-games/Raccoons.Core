@@ -82,6 +82,22 @@ namespace Raccoons.Analytics.Tests
         }
 
         [Test]
+        public void AdFormat_ObviousAliases_AreMappedToMaxCodes()
+        {
+            RaccoonsAnalytics.Initialize(_sink);
+            RaccoonsAnalytics.AdLoaded("interstitial", 0.004, "Net", "i1");
+            RaccoonsAnalytics.AdImpression("Interstitial", 0.01, "placement_a", "Net", "i1");
+            RaccoonsAnalytics.AdImpression("rewarded_video", 0.02, "placement_b", "Net", "r1");
+            RaccoonsAnalytics.AdImpression("RewardedVideo", 0.02, "placement_b", "Net", "r1");
+            RaccoonsAnalytics.AdImpression("mrec", 0.001, null, "Net", "m1");
+            RaccoonsAnalytics.AdImpression("native", 0.001, null, "Net", "n1");
+
+            var formats = _sink.Named("ad_impression").Select(e => (string)e["ad_format"]).ToList();
+            CollectionAssert.AreEqual(new[] { "INTER", "REWARDED", "REWARDED", "MREC", "NATIVE" }, formats);
+            Assert.AreEqual(4.0, (double)_sink.Named("initial_ecpm").Single()["value"], 1e-9, "alias counts as INTER on load");
+        }
+
+        [Test]
         public void InitialEcpm_IsSentOncePerLaunch_FromLoadThenNotFromImpression()
         {
             RaccoonsAnalytics.Initialize(_sink);

@@ -43,13 +43,13 @@ namespace Raccoons.Analytics
         /// One paid ad impression → ad_impression, the only source of ad revenue for the dashboard.
         /// Do not also send *RevenuePaid events: the dashboard would count the money twice.
         /// </summary>
-        /// <param name="adFormat">Mediation format code, uppercase: BANNER, LEADER, MREC, INTER, REWARDED.</param>
+        /// <param name="adFormat">BANNER, LEADER, MREC, INTER or REWARDED (MAX codes as-is; other mediations map to these).</param>
         /// <param name="revenue">USD. Negative (MAX sends -1 when the network did not disclose it) is reported as 0.</param>
         /// <param name="placement">placement_* passed to the show call; null for banners.</param>
         public static void AdImpression(string adFormat, double revenue, string placement = null,
             string adSource = null, string adUnitName = null, string adPlatform = "AppLovin")
         {
-            var format = (adFormat ?? string.Empty).ToUpperInvariant();
+            var format = NormalizeAdFormat(adFormat);
             var value = revenue < 0 || double.IsNaN(revenue) ? 0d : revenue;
 
             if (BannerBatchSeconds > 0 && (format == "BANNER" || format == "LEADER"))
@@ -80,7 +80,7 @@ namespace Raccoons.Analytics
         public static void AdLoaded(string adFormat, double revenue, string adSource = null,
             string adUnitName = null, string adPlatform = "AppLovin")
         {
-            if (revenue < 0 || !string.Equals(adFormat, "INTER", StringComparison.OrdinalIgnoreCase)) return;
+            if (revenue < 0 || NormalizeAdFormat(adFormat) != "INTER") return;
             TrySendInitialEcpm(revenue, adSource, adUnitName, adPlatform);
         }
 
@@ -109,6 +109,19 @@ namespace Raccoons.Analytics
             }
             _initialEcpmSent = 0;
             BannerBatchSeconds = 0;
+        }
+
+        // The dashboard matches MAX codes. Only obvious aliases from other mediations are mapped.
+        private static string NormalizeAdFormat(string adFormat)
+        {
+            var format = (adFormat ?? string.Empty).ToUpperInvariant();
+            switch (format)
+            {
+                case "INTERSTITIAL": return "INTER";
+                case "REWARDED_VIDEO":
+                case "REWARDEDVIDEO": return "REWARDED";
+                default: return format;
+            }
         }
 
         private static void TrySendInitialEcpm(double revenue, string adSource, string adUnitName, string adPlatform)
