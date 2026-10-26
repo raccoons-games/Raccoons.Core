@@ -7,6 +7,15 @@ namespace Raccoons.Analytics.Firebase
 {
     public class FirebaseAnalyticsService : IAnalyticsService
     {
+        public FirebaseAnalyticsService()
+        {
+#if !RACCOONS_FIREBASE_ANALYTICS
+            // Without the define LogEvent compiles to nothing while OnLogEvent logs still say "sent".
+            UnityEngine.Debug.LogError("[FirebaseAnalyticsService] RACCOONS_FIREBASE_ANALYTICS is not defined for this platform: " +
+                                       "NO events reach Firebase. Raccoons → Integrations → Enable with 'Apply to all platforms'.");
+#endif
+        }
+
         public void LogEvent(string eventName, Dictionary<string, object> parameters)
         {
 #if RACCOONS_FIREBASE_ANALYTICS
