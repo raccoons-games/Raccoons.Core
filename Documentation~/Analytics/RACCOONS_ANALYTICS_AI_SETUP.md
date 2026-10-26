@@ -85,10 +85,10 @@ currency, list of rewarded & interstitial placements, GCP project id and BigQuer
    a .unitypackage Zenject, add `RACCOONS_DEPS_AVAILABLE` manually to Android and iOS defines.
 2. `Packages/manifest.json` — pin the SDK to a commit (no tag contains Analytics yet):
    ```json
-   "com.raccoons.core": "https://github.com/raccoons-games/Raccoons.Core.git#0d54dd7f9c04d3698d75968c78fcfac5597e9cfa"
+   "com.raccoons.core": "https://github.com/raccoons-games/Raccoons.Core.git#b84036d469fc51af61a020d345d138a1d5e022e5"
    ```
-   This is the first commit with the live-ops API (package version 0.1.0). Until branch `feat/liveops-analytics`
-   is merged into main, ask the human for the current tag/commit and use that instead. Verify after resolve:
+   This is a commit of branch `feat/liveops-analytics` (package version 0.1.0). **Update to the main commit / tag
+   v0.1.0 after the merge** — until then ask the human for the current tag/commit and use that instead. Verify after resolve:
    `Library/PackageCache/com.raccoons.core*/package.json` → version ≥ 0.1.0, and
    `Runtime/Analytics/RaccoonsAnalytics.AdRevenue.cs` exists.
    **Upgrading a live game from 0.0.x: only with the human's explicit go-ahead (live-ops checks it first).** 0.1.0

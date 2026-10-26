@@ -54,11 +54,11 @@
 незапінений main може змінитись під тобою. У `Packages/manifest.json`:
 
 ```json
-"com.raccoons.core": "https://github.com/raccoons-games/Raccoons.Core.git#0d54dd7f9c04d3698d75968c78fcfac5597e9cfa"
+"com.raccoons.core": "https://github.com/raccoons-games/Raccoons.Core.git#b84036d469fc51af61a020d345d138a1d5e022e5"
 ```
 
-Це перший коміт із live-ops методами (версія 0.1.0). ⚠️ Поки гілку `feat/liveops-analytics` не
-змержено в main, оновити пін на тег або коміт main після мержу.
+Це коміт гілки `feat/liveops-analytics` (версія 0.1.0). ⚠️ **Оновити на коміт main / тег v0.1.0
+після мержу.**
 
 Не копіюй рядок із manifest Arrow Cube: там у `Packages/` лежить вбудована копія SDK, і git-URL
 без тегу в новій грі дасть зовсім інший код.
