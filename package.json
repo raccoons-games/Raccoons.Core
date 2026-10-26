@@ -1,7 +1,7 @@
 {
   "name": "com.raccoons.core",
   "displayName": "Raccoons Core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Raccoons core framework.",
   "unity": "2021.1",
   "author": "Raccoons Games",
